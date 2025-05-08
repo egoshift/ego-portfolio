@@ -1,0 +1,34 @@
+.app {
+  transition: width, height, margin-top, cubic-bezier(0.25, 1, 0.5, 1) 200ms;
+  position: relative;
+}
+
+.app:hover {
+  margin-top: -50px;
+}
+
+/* Right side */
+.app:hover + .app {
+  /* width: calc(80px + var(--dock-offset-right, 0px));
+  height: calc(80px + var(--dock-offset-right, 0px)); */
+  margin-top: calc(-20px + var(--dock-offset-right, 0px) * -1);
+}
+
+.app:hover + .app + .app {
+  /* width: calc(70px + var(--dock-offset-right, 0px));
+  height: calc(70px + var(--dock-offset-right, 0px)); */
+  margin-top: calc(-10px + var(--dock-offset-right, 0px) * -1);
+}
+
+/* Left side */
+.app:has(+ .app:hover){
+  /* width: calc(80px + var(--dock-offset-left, 0px));
+  height: calc(80px + var(--dock-offset-left, 0px)); */
+  margin-top: calc(-20px + var(--dock-offset-left, 0px) * -1);
+}
+
+.app:has(+ .app + .app:hover){
+  /* width: calc(70px + var(--dock-offset-left, 0px));
+  height: calc(70px + var(--dock-offset-left, 0px)); */
+  margin-top: calc(-10px + var(--dock-offset-left, 0px) * -1);
+}
