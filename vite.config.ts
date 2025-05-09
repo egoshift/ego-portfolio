@@ -8,5 +8,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), svgr({
     include: "**/*.svg?react"
   })],
-  base: '/ego-portfolio/'
+  base: '/ego-portfolio/',
+  build: {
+    chunkSizeWarningLimit: 600
+  }
 })
