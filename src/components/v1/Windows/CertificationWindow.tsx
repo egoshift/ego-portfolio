@@ -22,7 +22,7 @@ const Tabs: TabType[] = [
     certificateTitle: "Electronic Data Processing Specialist",
     issuer: "Department of Information and Communications Technology",
     issued: "Issued: Jan 31, 2019 - Philippines",
-    logo: "/dict.svg"
+    logo: "./dict.svg"
   },
   {
     tabTitle: 'NC II - Computer Systems Servicing',
@@ -30,7 +30,7 @@ const Tabs: TabType[] = [
     certificateTitle: "NC II - Computer Systems Servicing",
     issuer: "Technical Education and Skills Development Authority",
     issued: "Validity: 2019 - 2024",
-    logo: "/tesda.svg"
+    logo: "./tesda.svg"
   }
 ]
 
@@ -73,7 +73,7 @@ export default function CertificationWindow(props: Props) {
             style={{
               backgroundImage: `
                 linear-gradient(to bottom, rgba(255, 255, 255, 0) 1%, rgba(80, 162, 255, 1)),
-                url('/confetti.gif')
+                url('./confetti.gif')
               `,
               backgroundSize: '60%',
               backgroundPosition: 'center',
