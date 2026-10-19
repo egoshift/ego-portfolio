@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import DraggableWindow, { DraggableWindowProps } from "../DraggableWindow";
 import { WindowEnum } from "../../../enums/Windows.enum";
+import { asset } from "../../../utils/asset";
 
 interface Props extends DraggableWindowProps {}
 
@@ -23,7 +24,7 @@ export default function AboutWindow(props: Props) {
     <DraggableWindow {...props} windowClassName="w-[300px]" window={WindowEnum.ABOUT}>
       <div className="p-6 mt-6">
         <div className="rounded-full overflow-hidden my-2 mx-2 shadow-xl">
-          <img src={images[selectedImage]} alt="" />
+          <img src={asset(images[selectedImage])} alt="" />
         </div>
         <ul className="flex justify-center space-x-1 text-sm">
           <li className="p-1 rounded-lg border border-transparent hover:border-gray-200/50" onClick={() => setSelectedImage(0)}>💻</li>

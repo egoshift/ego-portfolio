@@ -1,54 +1,47 @@
-# React + TypeScript + Vite
+# ego-portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal portfolio, deployed to GitHub Pages at
+[egoshift.github.io/ego-portfolio](https://egoshift.github.io/ego-portfolio/).
 
-Currently, two official plugins are available:
+## Versions
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The site is a Vite multi-page build. Each version has its own HTML entry point
+and its own component tree; everything under `src/` outside `components/` is
+shared.
 
-## Expanding the ESLint configuration
+| Version | URL                                | Entry             | Components            |
+| ------- | ---------------------------------- | ----------------- | --------------------- |
+| v2      | `/ego-portfolio/` (root)           | `index.html`      | `src/components/v2/`  |
+| v1      | `/ego-portfolio/v1/`               | `v1/index.html`   | `src/components/v1/`  |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+v1 is the macOS-desktop portfolio and is frozen at `/v1/`. v2 has taken over the
+root URL and is currently a black viewport placeholder.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Layout
+
+```
+index.html              v2 page (root)
+v1/index.html           v1 page
+src/
+  entries/              one mount script per version
+  components/v1/        v1 UI (desktop, dock, windows)
+  components/v2/        v2 UI
+  contexts/ enums/      shared state
+  constants/ utils/     shared data and helpers
+  assets/ styles/       shared assets
+public/                 static files served from the deploy base
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Reference `public/` files through `asset()` in `src/utils/asset.ts` — it
+prefixes the deploy base so a path resolves the same from `/` and from `/v1/`.
+A bare relative path like `me-programmer.png` breaks on the nested v1 page.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Development
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm install
+npm run dev      # v2 at /ego-portfolio/, v1 at /ego-portfolio/v1/
+npm run build
+npm run preview
+npm run deploy   # builds, then publishes dist/ to the gh-pages branch
 ```

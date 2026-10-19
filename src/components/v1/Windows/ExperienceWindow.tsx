@@ -4,6 +4,7 @@ import { Professional, Techs } from "../../../constants/experiences.constants";
 import { cx } from "../../../utils/cx";
 import { useState } from "react";
 import { WindowEnum } from "../../../enums/Windows.enum";
+import { asset } from "../../../utils/asset";
 
 interface Props extends DraggableWindowProps {}
 
@@ -16,7 +17,7 @@ export default function ExperienceWindow(props: Props) {
         <div className="bg-gray-200/50 pt-14 px-4 shadow">
           <div className="flex items-center space-x-4">
             <div className="w-[50px] h-[50px] rounded-full overflow-hidden shadow-xl">
-              <img src="me-programmer.png" alt="" />
+              <img src={asset("me-programmer.png")} alt="" />
             </div>
             <div>
               <p className="text-xs font-semibold">Ems Oriel</p>
@@ -55,7 +56,7 @@ export default function ExperienceWindow(props: Props) {
                   <p className="text-xs text-gray-500 font-bold">Common Tech Stack</p>
                   <div className="flex space-x-1">
                     {e.techstack.map((t: string) => (
-                      <img src={Techs[t]?.logo || ''} className="size-[25px] bg-white border-[0.5px] border-gray-200 shadow p-1 rounded-lg" />
+                      <img src={asset(Techs[t]?.logo || '')} className="size-[25px] bg-white border-[0.5px] border-gray-200 shadow p-1 rounded-lg" />
                     ))}
                   </div>
                 </div>
@@ -91,7 +92,7 @@ export default function ExperienceWindow(props: Props) {
                         <div className="my-2">{p.description}</div>
                         <div className="flex -space-x-2">
                           {p.techstack.map((t: string) => (
-                            <img src={Techs[t].logo} className="size-[25px] bg-white border-[0.5px] border-gray-200 shadow p-1 rounded-lg object-contain" />
+                            <img src={asset(Techs[t].logo)} className="size-[25px] bg-white border-[0.5px] border-gray-200 shadow p-1 rounded-lg object-contain" />
                           ))}
                         </div>
                       </li>

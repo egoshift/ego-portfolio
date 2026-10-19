@@ -2,6 +2,7 @@ import { useState } from "react";
 import DraggableWindow, { DraggableWindowProps } from "../DraggableWindow";
 import { cx } from "../../../utils/cx";
 import { WindowEnum } from "../../../enums/Windows.enum";
+import { asset } from "../../../utils/asset";
 
 interface Props extends DraggableWindowProps {}
 interface TabType {
@@ -73,7 +74,7 @@ export default function CertificationWindow(props: Props) {
             style={{
               backgroundImage: `
                 linear-gradient(to bottom, rgba(255, 255, 255, 0) 1%, rgba(80, 162, 255, 1)),
-                url('./confetti.gif')
+                url('${asset('confetti.gif')}')
               `,
               backgroundSize: '60%',
               backgroundPosition: 'center',
@@ -85,7 +86,7 @@ export default function CertificationWindow(props: Props) {
               "relative flex flex-col items-center justify-center mt-12 z-1",
               index === selectedTab ? '' : 'hidden'
             )}>
-              <img src={tab.logo} className="w-25 mb-12" />
+              <img src={asset(tab.logo ?? "")} className="w-25 mb-12" />
               <p className="font-bold text-white">{tab.certificateTitle}</p>
               <p className="text-xs font-semibold text-white">{tab.issuer}</p>
               <p className="text-xs font-semibold italic text-white mt-4">{tab.issued}</p>

@@ -10,6 +10,13 @@ export default defineConfig({
   })],
   base: '/ego-portfolio/',
   build: {
-    chunkSizeWarningLimit: 600
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      // v2 takes over the root URL; v1 is archived under /v1/
+      input: {
+        v2: 'index.html',
+        v1: 'v1/index.html',
+      }
+    }
   }
 })
