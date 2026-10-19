@@ -14,13 +14,13 @@
 type RGB = [number, number, number];
 
 /** The idle backdrop picks from these. */
-const FIELD_GLYPHS = '01<>[]{}()/\\|-_=+*^~:;.,!?$#%&';
+const FIELD_GLYPHS = "01<>[]{}()/\\|-_=+*^~:;.,!?$#%&";
 /** Sparse to dense. A ripple crest walks up this ramp. */
-const RAMP = '.:-=+*#%@';
-const GLYPHS = [...new Set([...FIELD_GLYPHS, ...RAMP])].join('');
+const RAMP = ".:-=+*#%@";
+const GLYPHS = [...new Set([...FIELD_GLYPHS, ...RAMP])].join("");
 const RAMP_INDEX = [...RAMP].map((glyph) => GLYPHS.indexOf(glyph));
 
-const FONT_STACK = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+const FONT_STACK = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 const FONT_SIZE = 14;
 const LINE_HEIGHT = 1.45;
 
@@ -44,7 +44,7 @@ const BLOCKS = 3;
  */
 
 /** Ceiling for everything drawn, so foreground content stays readable on top. */
-const MAX_OPACITY = 0.7;
+const MAX_OPACITY = 0.5;
 
 /** Idle cells take a random opacity in this band. The spread is what gives the
  *  field its uneven, twinkling look instead of one flat wash. */
@@ -186,9 +186,9 @@ function stepFor(fraction: number): number {
 export class AsciiRipples {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
-  private readonly atlas = document.createElement('canvas');
+  private readonly atlas = document.createElement("canvas");
   private readonly atlasCtx: CanvasRenderingContext2D;
-  private readonly idle = document.createElement('canvas');
+  private readonly idle = document.createElement("canvas");
   private readonly idleCtx: CanvasRenderingContext2D;
 
   private cols = 0;
@@ -236,11 +236,11 @@ export class AsciiRipples {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    const ctx = canvas.getContext('2d', { alpha: false });
-    const atlasCtx = this.atlas.getContext('2d');
-    const idleCtx = this.idle.getContext('2d', { alpha: false });
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const atlasCtx = this.atlas.getContext("2d");
+    const idleCtx = this.idle.getContext("2d", { alpha: false });
     if (!ctx || !atlasCtx || !idleCtx) {
-      throw new Error('AsciiRipples: 2d canvas context unavailable');
+      throw new Error("AsciiRipples: 2d canvas context unavailable");
     }
     this.ctx = ctx;
     this.atlasCtx = atlasCtx;
@@ -248,17 +248,17 @@ export class AsciiRipples {
   }
 
   mount(): void {
-    this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     this.reduceMotion = this.motionQuery.matches;
-    this.motionQuery.addEventListener('change', this.handleMotionChange);
+    this.motionQuery.addEventListener("change", this.handleMotionChange);
 
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(this.canvas);
 
-    this.canvas.addEventListener('pointerdown', this.handlePointerDown);
-    this.canvas.addEventListener('pointermove', this.handlePointerMove);
-    this.canvas.addEventListener('pointerleave', this.handlePointerLeave);
-    this.canvas.addEventListener('pointercancel', this.handlePointerLeave);
+    this.canvas.addEventListener("pointerdown", this.handlePointerDown);
+    this.canvas.addEventListener("pointermove", this.handlePointerMove);
+    this.canvas.addEventListener("pointerleave", this.handlePointerLeave);
+    this.canvas.addEventListener("pointercancel", this.handlePointerLeave);
 
     this.resize();
   }
@@ -268,12 +268,12 @@ export class AsciiRipples {
     this.stop();
     this.observer?.disconnect();
     this.observer = null;
-    this.motionQuery?.removeEventListener('change', this.handleMotionChange);
+    this.motionQuery?.removeEventListener("change", this.handleMotionChange);
     this.motionQuery = null;
-    this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
-    this.canvas.removeEventListener('pointermove', this.handlePointerMove);
-    this.canvas.removeEventListener('pointerleave', this.handlePointerLeave);
-    this.canvas.removeEventListener('pointercancel', this.handlePointerLeave);
+    this.canvas.removeEventListener("pointerdown", this.handlePointerDown);
+    this.canvas.removeEventListener("pointermove", this.handlePointerMove);
+    this.canvas.removeEventListener("pointerleave", this.handlePointerLeave);
+    this.canvas.removeEventListener("pointercancel", this.handlePointerLeave);
   }
 
   /** Start a ripple at a point in CSS pixels relative to the canvas. */
@@ -310,7 +310,10 @@ export class AsciiRipples {
 
   private handlePointerMove = (event: PointerEvent): void => {
     const { x, y } = this.toLocal(event);
-    this.pointerInside = true;
+    const inside = x >= 0 && y >= 0 && x < this.width && y < this.height;
+    // Nothing to redraw if it was outside and still is.
+    if (!inside && !this.pointerInside) return;
+    this.pointerInside = inside;
     this.pointerX = x;
     this.pointerY = y;
     this.start();
@@ -332,7 +335,8 @@ export class AsciiRipples {
     const height = Math.max(1, Math.round(rect.height));
     // Capping keeps 3x phone screens from paying for tiles nobody can see.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    if (width === this.width && height === this.height && dpr === this.dpr) return;
+    if (width === this.width && height === this.height && dpr === this.dpr)
+      return;
 
     this.width = width;
     this.height = height;
@@ -375,7 +379,7 @@ export class AsciiRipples {
     this.glyph[i] = (Math.random() * GLYPHS.length) | 0;
     this.shown[i] = Math.random() < FIELD_DENSITY ? 1 : 0;
     this.idleStep[i] = stepFor(
-      IDLE_OPACITY_MIN + Math.random() * (IDLE_OPACITY_MAX - IDLE_OPACITY_MIN)
+      IDLE_OPACITY_MIN + Math.random() * (IDLE_OPACITY_MAX - IDLE_OPACITY_MIN),
     );
     this.accent[i] = Math.random() < ACCENT_CHANCE ? 1 : 0;
   }
@@ -388,7 +392,7 @@ export class AsciiRipples {
     const { atlasCtx, dpr } = this;
     const probeFont = `${FONT_SIZE * dpr}px ${FONT_STACK}`;
     atlasCtx.font = probeFont;
-    const advance = atlasCtx.measureText('M').width;
+    const advance = atlasCtx.measureText("M").width;
 
     this.cellW = Math.max(1, advance / dpr);
     this.cellH = Math.max(1, Math.round(FONT_SIZE * LINE_HEIGHT));
@@ -400,8 +404,8 @@ export class AsciiRipples {
 
     // Resizing the canvas cleared the context state, so set it up again.
     atlasCtx.font = probeFont;
-    atlasCtx.textAlign = 'center';
-    atlasCtx.textBaseline = 'middle';
+    atlasCtx.textAlign = "center";
+    atlasCtx.textBaseline = "middle";
     for (let row = 0; row < LEVELS * BLOCKS; row++) {
       const step = row % LEVELS;
       const opacity = MAX_OPACITY * stepFraction(step);
@@ -410,7 +414,10 @@ export class AsciiRipples {
         block === BLOCK_FIELD
           ? bake(FIELD_COLOR, opacity)
           : block === BLOCK_RIPPLE
-            ? bake(sampleGradient(RIPPLE_GRADIENT, step / (LEVELS - 1)), opacity)
+            ? bake(
+                sampleGradient(RIPPLE_GRADIENT, step / (LEVELS - 1)),
+                opacity,
+              )
             : bake(ACCENT_COLOR, opacity);
       const y = row * this.tileH + this.tileH / 2;
       for (let g = 0; g < GLYPHS.length; g++) {
@@ -424,7 +431,7 @@ export class AsciiRipples {
     glyph: number,
     row: number,
     x: number,
-    y: number
+    y: number,
   ): void {
     ctx.drawImage(
       this.atlas,
@@ -435,13 +442,13 @@ export class AsciiRipples {
       x,
       y,
       this.cellW,
-      this.cellH
+      this.cellH,
     );
   }
 
   private renderIdleLayer(): void {
     const { idleCtx } = this;
-    idleCtx.fillStyle = '#000';
+    idleCtx.fillStyle = "#000";
     idleCtx.fillRect(0, 0, this.width, this.height);
     for (let i = 0; i < this.shown.length; i++) {
       if (!this.shown[i]) continue;
@@ -452,7 +459,7 @@ export class AsciiRipples {
         this.glyph[i],
         this.idleStep[i],
         col * this.cellW,
-        row * this.cellH
+        row * this.cellH,
       );
     }
   }
@@ -467,9 +474,10 @@ export class AsciiRipples {
       this.rollCell(i);
       const x = (i % this.cols) * this.cellW;
       const y = ((i / this.cols) | 0) * this.cellH;
-      this.idleCtx.fillStyle = '#000';
+      this.idleCtx.fillStyle = "#000";
       this.idleCtx.fillRect(x, y, this.cellW, this.cellH);
-      if (this.shown[i]) this.blit(this.idleCtx, this.glyph[i], this.idleStep[i], x, y);
+      if (this.shown[i])
+        this.blit(this.idleCtx, this.glyph[i], this.idleStep[i], x, y);
     }
     return true;
   }
@@ -485,22 +493,29 @@ export class AsciiRipples {
       return true;
     }
     // A cursor that has not moved re-uses the buffer from last time.
-    if (this.pointerX === this.haloX && this.pointerY === this.haloY) return false;
+    if (this.pointerX === this.haloX && this.pointerY === this.haloY)
+      return false;
 
     this.halo.fill(0);
     this.haloDirty = true;
     this.haloX = this.pointerX;
     this.haloY = this.pointerY;
 
-    const c0 = Math.max(0, Math.floor((this.pointerX - HALO_RADIUS) / this.cellW));
+    const c0 = Math.max(
+      0,
+      Math.floor((this.pointerX - HALO_RADIUS) / this.cellW),
+    );
     const c1 = Math.min(
       this.cols - 1,
-      Math.ceil((this.pointerX + HALO_RADIUS) / this.cellW)
+      Math.ceil((this.pointerX + HALO_RADIUS) / this.cellW),
     );
-    const r0 = Math.max(0, Math.floor((this.pointerY - HALO_RADIUS) / this.cellH));
+    const r0 = Math.max(
+      0,
+      Math.floor((this.pointerY - HALO_RADIUS) / this.cellH),
+    );
     const r1 = Math.min(
       this.rows - 1,
-      Math.ceil((this.pointerY + HALO_RADIUS) / this.cellH)
+      Math.ceil((this.pointerY + HALO_RADIUS) / this.cellH),
     );
 
     for (let row = r0; row <= r1; row++) {
@@ -550,9 +565,15 @@ export class AsciiRipples {
       // The ring can bulge outward by this much, so the bbox has to allow for it.
       const reach = radius * (1 + RIPPLE_WOBBLE) + pad;
       const c0 = Math.max(0, Math.floor((ripple.x - reach) / this.cellW));
-      const c1 = Math.min(this.cols - 1, Math.ceil((ripple.x + reach) / this.cellW));
+      const c1 = Math.min(
+        this.cols - 1,
+        Math.ceil((ripple.x + reach) / this.cellW),
+      );
       const r0 = Math.max(0, Math.floor((ripple.y - reach) / this.cellH));
-      const r1 = Math.min(this.rows - 1, Math.ceil((ripple.y + reach) / this.cellH));
+      const r1 = Math.min(
+        this.rows - 1,
+        Math.ceil((ripple.y + reach) / this.cellH),
+      );
 
       for (let row = r0; row <= r1; row++) {
         const dy = (row + 0.5) * this.cellH - ripple.y;
@@ -569,7 +590,11 @@ export class AsciiRipples {
           let cosK = cos1;
           let sinK = sin1;
           let offset = 0;
-          for (let k = 1, h = 0; k <= WOBBLE_MAX && h < WOBBLE_HARMONICS.length; k++) {
+          for (
+            let k = 1, h = 0;
+            k <= WOBBLE_MAX && h < WOBBLE_HARMONICS.length;
+            k++
+          ) {
             if (k > 1) {
               const nextCos = cosK * cos1 - sinK * sin1;
               sinK = sinK * cos1 + cosK * sin1;
@@ -608,7 +633,7 @@ export class AsciiRipples {
     const { ctx } = this;
     ctx.drawImage(this.idle, 0, 0, this.width, this.height);
 
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = "#000";
     const top = LEVELS - 1;
     const haloTop = stepFor(HALO_OPACITY);
     const rippleTop = stepFor(RIPPLE_OPACITY);
@@ -629,7 +654,9 @@ export class AsciiRipples {
         // swaps in the density ramp so the ring reads as a wave.
         glyph =
           t > 0.25
-            ? RAMP_INDEX[Math.min(RAMP_INDEX.length - 1, (t * RAMP_INDEX.length) | 0)]
+            ? RAMP_INDEX[
+                Math.min(RAMP_INDEX.length - 1, (t * RAMP_INDEX.length) | 0)
+              ]
             : this.glyph[i];
         row = BLOCK_RIPPLE * LEVELS + Math.max(1, Math.round(t * rippleTop));
       } else {
@@ -637,7 +664,10 @@ export class AsciiRipples {
         // and reveals cells the idle layer was hiding.
         glyph = this.glyph[i];
         const base = this.idleStep[i];
-        const step = Math.min(top, Math.round(base + h * Math.max(0, haloTop - base)));
+        const step = Math.min(
+          top,
+          Math.round(base + h * Math.max(0, haloTop - base)),
+        );
         row = (this.accent[i] ? BLOCK_ACCENT : BLOCK_FIELD) * LEVELS + step;
       }
 

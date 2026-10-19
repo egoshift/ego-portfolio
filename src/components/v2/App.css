@@ -45,3 +45,81 @@ body {
   /* keeps a tap from double-tap-zooming instead of rippling */
   touch-action: none;
 }
+
+/* A word in a sentence, not a control — so the button chrome goes. Declared
+   before the hero rules on purpose: `font: inherit` carries font-size, so a
+   trigger that also carries a hero class needs that class to win. */
+.trigger {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+
+  font: inherit;
+  letter-spacing: inherit;
+  color: #00e6ff;
+
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid #00e6ff;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* The hero sits over the field. It takes no pointer events, so clicking and
+   hovering still reach the canvas underneath — only the triggers take them
+   back, which is what keeps a tap anywhere on the page rippling. */
+.hero {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 16px;
+
+  font-family: Helvetica, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  text-wrap: balance;
+
+  pointer-events: none;
+}
+
+.hero__title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.hero__greeting {
+  display: block;
+  margin-bottom: 0.4em;
+
+  font-size: clamp(1.05rem, 1.8vw, 1.9rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.hero__line {
+  display: block;
+
+  font-size: clamp(2.5rem, 5.2vw, 5.5rem);
+  line-height: 1.16;
+  letter-spacing: -0.03em;
+}
+
+.hero__tagline {
+  margin: 1.4em 0 0;
+
+  font-size: clamp(0.78rem, 0.95vw, 1.05rem);
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
