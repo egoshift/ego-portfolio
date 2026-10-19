@@ -24,8 +24,24 @@ body {
 }
 
 .viewport {
+  position: relative;
+
   width: 100%;
   height: 100%;
 
   background: #000;
+}
+
+.ascii-field {
+  position: absolute;
+  inset: 0;
+
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  /* hints that the whole page is the target */
+  cursor: crosshair;
+  /* keeps a tap from double-tap-zooming instead of rippling */
+  touch-action: none;
 }
