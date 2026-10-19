@@ -1,6 +1,24 @@
+/* v2 is a single page: full viewport, black, never scrolls.
+   Overrides the viewport rules index.css sets for v1. */
+:root,
+body {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+
+  background: #000;
+
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 #root {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  /* dvh so mobile browser chrome can't push the page into a scroll */
+  height: 100dvh;
 
   overflow: hidden;
 }
