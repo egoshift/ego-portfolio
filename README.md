@@ -42,6 +42,27 @@ Reference `public/` files through `asset()` in `src/utils/asset.ts` — it
 prefixes the deploy base so a path resolves the same from `/` and from `/v1/`.
 A bare relative path like `me-programmer.png` breaks on the nested v1 page.
 
+## GitHub contributions
+
+The contribution calendar is fetched at build time, not in the browser:
+
+```bash
+npm run contributions
+```
+
+That writes `public/github-contributions.json`, which is committed, so a build
+works offline and the page just reads a static file.
+
+It runs at build time because the calendar is only exposed through GitHub's
+GraphQL API and that endpoint requires a token. This site is static, so a token
+reachable from the page would be readable by anyone who opens the bundle. The
+script keeps it on the machine doing the fetch — `gh auth token` by default, or
+`GITHUB_TOKEN` for CI. `GITHUB_LOGIN` overrides whose calendar is pulled.
+
+The data is a snapshot, so re-run the command to refresh it. Read it from the
+app through `loadContributions()` in `src/components/v2/contributions.ts`, which
+returns `null` instead of throwing when the file is missing or stale.
+
 ## Development
 
 ```bash

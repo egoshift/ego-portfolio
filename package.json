@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "contributions": "node scripts/fetch-contributions.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
