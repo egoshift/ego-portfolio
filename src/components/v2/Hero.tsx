@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import Trigger from './Trigger';
+import { spreadGroup, spreadItem } from './motion';
 
 interface Props {
   onTrigger?: (name: string) => void;
@@ -6,27 +8,49 @@ interface Props {
 
 export default function Hero({ onTrigger }: Props) {
   return (
-    <div className="hero">
+    <motion.div
+      className="hero"
+      variants={spreadGroup}
+      initial="initial"
+      animate="enter"
+      exit="exit"
+    >
       <h1 className="hero__title">
-        <span className="hero__greeting">
+        <motion.span
+          className="hero__greeting"
+          variants={spreadItem}
+          custom={{ y: -1 }}
+        >
           Hi, I&rsquo;m{' '}
           <Trigger name="about" onTrigger={onTrigger}>
             Ems
           </Trigger>
           ,
-        </span>
-        <span className="hero__line">Full-stack</span>
-        <Trigger name="work" className="hero__line" onTrigger={onTrigger}>
-          Developer
-        </Trigger>
+        </motion.span>
+        <motion.span
+          className="hero__line"
+          variants={spreadItem}
+          custom={{ x: -1, y: -0.2 }}
+        >
+          Full-stack
+        </motion.span>
+        <motion.span
+          className="hero__line"
+          variants={spreadItem}
+          custom={{ x: 1, y: 0.2 }}
+        >
+          <Trigger name="work" className="hero__line" onTrigger={onTrigger}>
+            Developer
+          </Trigger>
+        </motion.span>
       </h1>
-      <p className="hero__tagline">
+      <motion.p className="hero__tagline" variants={spreadItem} custom={{ y: 1 }}>
         who{' '}
         <Trigger name="interests" onTrigger={onTrigger}>
           does
         </Trigger>{' '}
         a little bit of everything
-      </p>
-    </div>
+      </motion.p>
+    </motion.div>
   );
 }

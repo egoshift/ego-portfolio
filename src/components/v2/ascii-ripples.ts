@@ -91,6 +91,14 @@ const HALO_RADIUS = 170; // px
 const HALO_CORE = 0.15;
 /** Below this a cell is left to the idle layer. */
 const HALO_FLOOR = 0.01;
+/** The glow is deformed the same way a ripple is, so it reads as part of the
+ *  same field rather than a flashlight laid over it. */
+const HALO_WOBBLE = 0.32;
+const HALO_HARMONICS = [2, 3, 5];
+const HALO_MAX_HARMONIC = Math.max(...HALO_HARMONICS);
+/** Radians per second each harmonic's phase drifts. Different rates per
+ *  harmonic morph the outline instead of spinning it rigidly. */
+const HALO_DRIFT = 0.5;
 
 const RIPPLE_SPEED = 620; // px per second
 /** A ripple outlives the trip to its furthest corner by this much, so the wave
@@ -142,10 +150,10 @@ interface Ripple {
 }
 
 /** Random, normalised harmonic coefficients — a fresh silhouette per ripple. */
-function makeWobble(): Float64Array {
-  const coefficients = new Float64Array(WOBBLE_HARMONICS.length * 2);
+function makeWobble(count: number): Float64Array {
+  const coefficients = new Float64Array(count * 2);
   let total = 0;
-  for (let k = 0; k < WOBBLE_HARMONICS.length; k++) {
+  for (let k = 0; k < count; k++) {
     const weight = 0.4 + Math.random() * 0.6;
     const phase = Math.random() * Math.PI * 2;
     coefficients[k * 2] = weight * Math.cos(phase);
@@ -155,6 +163,36 @@ function makeWobble(): Float64Array {
   // Normalised so the summed wobble stays inside ±1 however the weights fell.
   for (let i = 0; i < coefficients.length; i++) coefficients[i] /= total;
   return coefficients;
+}
+
+/**
+ * Sum of angular harmonics at a direction, in roughly [-1, 1].
+ *
+ * Walks sin(k0)/cos(k0) up from the direction vector by repeated complex
+ * multiplication, so deforming a shape costs no trig call per cell.
+ */
+function angularOffset(
+  coefficients: Float64Array,
+  harmonics: number[],
+  maxHarmonic: number,
+  cos1: number,
+  sin1: number,
+): number {
+  let cosK = cos1;
+  let sinK = sin1;
+  let total = 0;
+  for (let k = 1, h = 0; k <= maxHarmonic && h < harmonics.length; k++) {
+    if (k > 1) {
+      const nextCos = cosK * cos1 - sinK * sin1;
+      sinK = sinK * cos1 + cosK * sin1;
+      cosK = nextCos;
+    }
+    if (k === harmonics[h]) {
+      total += coefficients[h * 2] * sinK + coefficients[h * 2 + 1] * cosK;
+      h++;
+    }
+  }
+  return total;
 }
 
 function sampleGradient(stops: RGB[], t: number): RGB {
@@ -211,6 +249,10 @@ export class AsciiRipples {
   private accent = new Uint8Array(0);
   private energy = new Float32Array(0);
   private halo = new Float32Array(0);
+  /** Base silhouette for the glow, rotated each frame to make it drift. */
+  private readonly haloWobble = makeWobble(HALO_HARMONICS.length);
+  /** Scratch holding this frame's rotated coefficients. */
+  private readonly haloWobbleFrame = new Float64Array(HALO_HARMONICS.length * 2);
 
   private ripples: Ripple[] = [];
   private frame = 0;
@@ -293,7 +335,7 @@ export class AsciiRipples {
       y,
       born: performance.now(),
       reach: this.diagonalFrom(x, y),
-      wobble: makeWobble(),
+      wobble: makeWobble(WOBBLE_HARMONICS.length),
     });
     this.start();
   }
@@ -497,7 +539,7 @@ export class AsciiRipples {
   }
 
   /** Returns whether the canvas needs repainting. */
-  private computeHalo(): boolean {
+  private computeHalo(now: number): boolean {
     if (!this.pointerInside) {
       if (!this.haloDirty) return false;
       this.halo.fill(0);
@@ -506,8 +548,14 @@ export class AsciiRipples {
       this.haloY = Number.NaN;
       return true;
     }
-    // A cursor that has not moved re-uses the buffer from last time.
-    if (this.pointerX === this.haloX && this.pointerY === this.haloY)
+    // While it drifts every frame is a new outline. Static, a cursor that has
+    // not moved re-uses the buffer from last time.
+    const drifting = !this.reduceMotion;
+    if (
+      !drifting &&
+      this.pointerX === this.haloX &&
+      this.pointerY === this.haloY
+    )
       return false;
 
     this.halo.fill(0);
@@ -515,21 +563,29 @@ export class AsciiRipples {
     this.haloX = this.pointerX;
     this.haloY = this.pointerY;
 
-    const c0 = Math.max(
-      0,
-      Math.floor((this.pointerX - HALO_RADIUS) / this.cellW),
-    );
+    const seconds = drifting ? now / 1000 : 0;
+    const wob = this.haloWobbleFrame;
+    for (let k = 0; k < HALO_HARMONICS.length; k++) {
+      const turn = seconds * HALO_DRIFT * (1 + k * 0.23);
+      const cos = Math.cos(turn);
+      const sin = Math.sin(turn);
+      const a = this.haloWobble[k * 2];
+      const b = this.haloWobble[k * 2 + 1];
+      wob[k * 2] = a * cos - b * sin;
+      wob[k * 2 + 1] = b * cos + a * sin;
+    }
+
+    // The outline can bulge this far out, so the bbox has to allow for it.
+    const maxRadius = HALO_RADIUS * (1 + HALO_WOBBLE);
+    const c0 = Math.max(0, Math.floor((this.pointerX - maxRadius) / this.cellW));
     const c1 = Math.min(
       this.cols - 1,
-      Math.ceil((this.pointerX + HALO_RADIUS) / this.cellW),
+      Math.ceil((this.pointerX + maxRadius) / this.cellW),
     );
-    const r0 = Math.max(
-      0,
-      Math.floor((this.pointerY - HALO_RADIUS) / this.cellH),
-    );
+    const r0 = Math.max(0, Math.floor((this.pointerY - maxRadius) / this.cellH));
     const r1 = Math.min(
       this.rows - 1,
-      Math.ceil((this.pointerY + HALO_RADIUS) / this.cellH),
+      Math.ceil((this.pointerY + maxRadius) / this.cellH),
     );
 
     for (let row = r0; row <= r1; row++) {
@@ -538,9 +594,19 @@ export class AsciiRipples {
       for (let col = c0; col <= c1; col++) {
         const dx = (col + 0.5) * this.cellW - this.pointerX;
         const d = Math.sqrt(dx * dx + dy * dy);
-        if (d >= HALO_RADIUS) continue;
-        const core = HALO_RADIUS * HALO_CORE;
-        const f = d <= core ? 1 : (HALO_RADIUS - d) / (HALO_RADIUS - core);
+        if (d >= maxRadius) continue;
+        const inv = d > 1e-6 ? 1 / d : 0;
+        const offset = angularOffset(
+          wob,
+          HALO_HARMONICS,
+          HALO_MAX_HARMONIC,
+          dx * inv,
+          dy * inv,
+        );
+        const radius = HALO_RADIUS * (1 + offset * HALO_WOBBLE);
+        if (d >= radius) continue;
+        const core = radius * HALO_CORE;
+        const f = d <= core ? 1 : (radius - d) / (radius - core);
         this.halo[base + col] = f * f;
       }
     }
@@ -596,29 +662,14 @@ export class AsciiRipples {
           const dx = (col + 0.5) * this.cellW - ripple.x;
           const d = Math.sqrt(dx * dx + dy * dy);
 
-          // Walk the harmonics up from the cell's own angle by repeated complex
-          // multiplication — sin(k0)/cos(k0) without a trig call per cell.
           const inv = d > 1e-6 ? 1 / d : 0;
-          const cos1 = dx * inv;
-          const sin1 = dy * inv;
-          let cosK = cos1;
-          let sinK = sin1;
-          let offset = 0;
-          for (
-            let k = 1, h = 0;
-            k <= WOBBLE_MAX && h < WOBBLE_HARMONICS.length;
-            k++
-          ) {
-            if (k > 1) {
-              const nextCos = cosK * cos1 - sinK * sin1;
-              sinK = sinK * cos1 + cosK * sin1;
-              cosK = nextCos;
-            }
-            if (k === WOBBLE_HARMONICS[h]) {
-              offset += wob[h * 2] * sinK + wob[h * 2 + 1] * cosK;
-              h++;
-            }
-          }
+          const offset = angularOffset(
+            wob,
+            WOBBLE_HARMONICS,
+            WOBBLE_MAX,
+            dx * inv,
+            dy * inv,
+          );
 
           const delta = d - radius * (1 + offset * RIPPLE_WOBBLE);
           if (delta < -pad || delta > pad) continue;
@@ -706,7 +757,7 @@ export class AsciiRipples {
     if (this.destroyed) return;
 
     const shimmered = this.reduceMotion ? false : this.shimmer(now);
-    const haloed = this.computeHalo();
+    const haloed = this.computeHalo(now);
     const rippling = this.computeEnergy(now);
     // Skip the repaint on frames where nothing actually changed.
     if (shimmered || haloed || rippling) this.present();
