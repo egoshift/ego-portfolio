@@ -27,6 +27,12 @@ const LINE_HEIGHT = 1.45;
 /** Steps in each palette ramp. More steps, smoother gradient. */
 const LEVELS = 10;
 
+/** The atlas stacks three ramps of LEVELS rows each; these pick the block. */
+const BLOCK_FIELD = 0;
+const BLOCK_RIPPLE = 1;
+const BLOCK_ACCENT = 2;
+const BLOCKS = 3;
+
 /* ── Opacity ──────────────────────────────────────────────────────────────
  * MAX_OPACITY is the master knob. Every other opacity here is a fraction of
  * it, so changing this one number moves the whole field — idle, halo and
@@ -53,6 +59,15 @@ const RIPPLE_OPACITY = 1;
 
 /** The field itself — idle glyphs and the clearer patch under the cursor. */
 const FIELD_COLOR: RGB = [206, 226, 236];
+
+/** A scattering of cells inside the cursor halo take this instead of the field
+ *  colour, so the glow has flecks of colour in it rather than reading as one
+ *  flat wash. They only show under the halo — at idle they look like any other
+ *  cell, so the colour appears as the cursor sweeps over them. */
+const ACCENT_COLOR: RGB = [0, 230, 255]; // #00E6FF
+/** Share of cells that are accent cells. Keep it low — it should read as a few
+ *  flecks, not a second field. */
+const ACCENT_CHANCE = 0.06;
 
 /** A ripple runs along this gradient, anchored on #00E6FF. */
 const RIPPLE_GRADIENT: RGB[] = [
@@ -81,8 +96,13 @@ const RIPPLE_SPEED = 620; // px per second
 /** A ripple outlives the trip to its furthest corner by this much, so the wave
  *  always makes it across whatever the viewport size, then fades just after. */
 const RIPPLE_TAIL = 1.35;
-/** Holds full brightness for most of that trip, then falls off over the tail. */
-const RIPPLE_FADE = 2.2;
+/**
+ * Shape of the fade over a ripple's life. The wave only touches RIPPLE_OPACITY
+ * at the moment it is struck and thins out the whole way across, rather than
+ * riding the cap and dropping off at the end. 1 is a straight linear fade;
+ * higher holds it stronger early and lets it go sooner after.
+ */
+const RIPPLE_FALLOFF = 1.4;
 const RIPPLE_BAND = 64; // px — width of the gaussian envelope
 const RIPPLE_WAVELENGTH = 0.085; // radians per px — gives the trailing rings
 const MAX_RIPPLES = 12;
@@ -98,7 +118,9 @@ const RIPPLE_WOBBLE = 0.13;
 const WOBBLE_HARMONICS = [2, 3, 5];
 const WOBBLE_MAX = Math.max(...WOBBLE_HARMONICS);
 /** How much that same wobble also varies brightness around the ring, so one
- *  side of the wave carries more energy than the other. */
+ *  side of the wave carries more energy than the other. It only ever darkens —
+ *  if it could amplify, the crest would re-clip to the cap and the fade would
+ *  flatten out at the top. */
 const RIPPLE_SHADE = 0.35;
 /** Band widening per pixel of radius — the wave goes softer as it spreads. */
 const RIPPLE_DISPERSION = 0.0004;
@@ -185,6 +207,8 @@ export class AsciiRipples {
   private shown = new Uint8Array(0);
   /** Palette step this cell sits at when idle — randomised per cell. */
   private idleStep = new Uint8Array(0);
+  /** Cells that render in ACCENT_COLOR once the halo reaches them. */
+  private accent = new Uint8Array(0);
   private energy = new Float32Array(0);
   private halo = new Float32Array(0);
 
@@ -323,6 +347,7 @@ export class AsciiRipples {
     this.glyph = new Uint8Array(cells);
     this.shown = new Uint8Array(cells);
     this.idleStep = new Uint8Array(cells);
+    this.accent = new Uint8Array(cells);
     this.energy = new Float32Array(cells);
     this.halo = new Float32Array(cells);
     for (let i = 0; i < cells; i++) this.rollCell(i);
@@ -352,6 +377,7 @@ export class AsciiRipples {
     this.idleStep[i] = stepFor(
       IDLE_OPACITY_MIN + Math.random() * (IDLE_OPACITY_MAX - IDLE_OPACITY_MIN)
     );
+    this.accent[i] = Math.random() < ACCENT_CHANCE ? 1 : 0;
   }
 
   /**
@@ -370,19 +396,22 @@ export class AsciiRipples {
     this.tileH = Math.max(1, Math.ceil(this.cellH * dpr));
 
     this.atlas.width = this.tileW * GLYPHS.length;
-    this.atlas.height = this.tileH * LEVELS * 2;
+    this.atlas.height = this.tileH * LEVELS * BLOCKS;
 
     // Resizing the canvas cleared the context state, so set it up again.
     atlasCtx.font = probeFont;
     atlasCtx.textAlign = 'center';
     atlasCtx.textBaseline = 'middle';
-    for (let row = 0; row < LEVELS * 2; row++) {
+    for (let row = 0; row < LEVELS * BLOCKS; row++) {
       const step = row % LEVELS;
       const opacity = MAX_OPACITY * stepFraction(step);
+      const block = (row / LEVELS) | 0;
       atlasCtx.fillStyle =
-        row < LEVELS
+        block === BLOCK_FIELD
           ? bake(FIELD_COLOR, opacity)
-          : bake(sampleGradient(RIPPLE_GRADIENT, step / (LEVELS - 1)), opacity);
+          : block === BLOCK_RIPPLE
+            ? bake(sampleGradient(RIPPLE_GRADIENT, step / (LEVELS - 1)), opacity)
+            : bake(ACCENT_COLOR, opacity);
       const y = row * this.tileH + this.tileH / 2;
       for (let g = 0; g < GLYPHS.length; g++) {
         atlasCtx.fillText(GLYPHS[g], g * this.tileW + this.tileW / 2, y);
@@ -513,7 +542,7 @@ export class AsciiRipples {
         continue;
       }
 
-      const amp = Math.min(1, life * RIPPLE_FADE);
+      const amp = Math.pow(life, RIPPLE_FALLOFF);
       // The band softens as the wave spreads.
       const band = RIPPLE_BAND * (1 + radius * RIPPLE_DISPERSION);
       const pad = band * 2;
@@ -557,7 +586,8 @@ export class AsciiRipples {
           const envelope = Math.exp(-(delta * delta) / (band * band));
           const wave = Math.cos(delta * RIPPLE_WAVELENGTH);
           // Same wobble shades the ring, so the energy is uneven around it.
-          const shade = Math.max(0, 1 + offset * RIPPLE_SHADE);
+          // Darkens only, topping out at 1, so the crest tracks the fade curve.
+          const shade = 1 - RIPPLE_SHADE * 0.5 * (1 - offset);
           this.energy[base + col] += Math.abs(envelope * wave) * amp * shade;
         }
       }
@@ -601,13 +631,14 @@ export class AsciiRipples {
           t > 0.25
             ? RAMP_INDEX[Math.min(RAMP_INDEX.length - 1, (t * RAMP_INDEX.length) | 0)]
             : this.glyph[i];
-        row = LEVELS + Math.max(1, Math.round(t * rippleTop));
+        row = BLOCK_RIPPLE * LEVELS + Math.max(1, Math.round(t * rippleTop));
       } else {
         // The halo lifts a cell from its own idle opacity toward HALO_OPACITY,
         // and reveals cells the idle layer was hiding.
         glyph = this.glyph[i];
         const base = this.idleStep[i];
-        row = Math.min(top, Math.round(base + h * Math.max(0, haloTop - base)));
+        const step = Math.min(top, Math.round(base + h * Math.max(0, haloTop - base)));
+        row = (this.accent[i] ? BLOCK_ACCENT : BLOCK_FIELD) * LEVELS + step;
       }
 
       ctx.fillRect(x, y, this.cellW, this.cellH);
