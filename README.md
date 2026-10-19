@@ -15,7 +15,10 @@ shared.
 | v1      | `/ego-portfolio/v1/`               | `v1/index.html`   | `src/components/v1/`  |
 
 v1 is the macOS-desktop portfolio and is frozen at `/v1/`. v2 has taken over the
-root URL and is currently a black viewport placeholder.
+root URL: a single non-scrolling screen holding a field of random ASCII that
+ripples outward from a tap. The wave lives in `src/components/v2/ascii-ripples.ts`
+— that file's header explains how a frame is drawn, and the constants at the top
+(speed, band width, wavelength, colours, field density) are the tuning knobs.
 
 ## Layout
 
