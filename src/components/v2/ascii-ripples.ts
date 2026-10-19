@@ -256,9 +256,17 @@ export class AsciiRipples {
     this.observer.observe(this.canvas);
 
     this.canvas.addEventListener("pointerdown", this.handlePointerDown);
-    this.canvas.addEventListener("pointermove", this.handlePointerMove);
-    this.canvas.addEventListener("pointerleave", this.handlePointerLeave);
     this.canvas.addEventListener("pointercancel", this.handlePointerLeave);
+    // Movement is tracked on the window rather than the canvas, so the halo
+    // keeps following the cursor across anything layered over the field — the
+    // hero text and its triggers sit on top and would otherwise swallow it.
+    window.addEventListener("pointermove", this.handlePointerMove);
+    // Leaving the window shows up as a pointerout with no relatedTarget. A
+    // pointerleave on document would also fire when the cursor crosses from
+    // the canvas onto something above it, killing the halo exactly where it
+    // should keep tracking.
+    document.addEventListener("pointerout", this.handlePointerOut);
+    window.addEventListener("blur", this.handlePointerLeave);
 
     this.resize();
   }
@@ -271,9 +279,10 @@ export class AsciiRipples {
     this.motionQuery?.removeEventListener("change", this.handleMotionChange);
     this.motionQuery = null;
     this.canvas.removeEventListener("pointerdown", this.handlePointerDown);
-    this.canvas.removeEventListener("pointermove", this.handlePointerMove);
-    this.canvas.removeEventListener("pointerleave", this.handlePointerLeave);
     this.canvas.removeEventListener("pointercancel", this.handlePointerLeave);
+    window.removeEventListener("pointermove", this.handlePointerMove);
+    document.removeEventListener("pointerout", this.handlePointerOut);
+    window.removeEventListener("blur", this.handlePointerLeave);
   }
 
   /** Start a ripple at a point in CSS pixels relative to the canvas. */
@@ -317,6 +326,11 @@ export class AsciiRipples {
     this.pointerX = x;
     this.pointerY = y;
     this.start();
+  };
+
+  private handlePointerOut = (event: PointerEvent): void => {
+    // relatedTarget is null only when the pointer left the window altogether.
+    if (event.relatedTarget === null) this.handlePointerLeave();
   };
 
   private handlePointerLeave = (): void => {

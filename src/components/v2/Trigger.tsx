@@ -19,6 +19,7 @@ export default function Trigger({ name, className, children, onTrigger }: Props)
       className={className ? `trigger ${className}` : 'trigger'}
       data-trigger={name}
       data-text={children}
+      tabIndex={-1}
       onClick={() => onTrigger?.(name)}
     >
       {children}
