@@ -1,1 +1,0 @@
-import{j as t,c as e,r}from"./index-DpT-y9UT.js";function o(){return t.jsx("main",{className:"viewport"})}e.createRoot(document.getElementById("root")).render(t.jsx(r.StrictMode,{children:t.jsx(o,{})}));
