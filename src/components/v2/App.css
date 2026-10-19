@@ -50,6 +50,8 @@ body {
    before the hero rules on purpose: `font: inherit` carries font-size, so a
    trigger that also carries a hero class needs that class to win. */
 .trigger {
+  position: relative;
+
   appearance: none;
   margin: 0;
   padding: 0;
@@ -68,6 +70,67 @@ body {
   outline: 2px solid #00e6ff;
   outline-offset: 4px;
   border-radius: 2px;
+}
+
+/* On hover the word goes white and splits into offset red and cyan copies.
+   The copies are pseudo-elements laid exactly over the button and taken out
+   of flow, so nothing around them moves while the glitch runs. */
+.trigger:hover,
+.trigger:focus-visible {
+  color: #fff;
+}
+
+.trigger::before,
+.trigger::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+
+  opacity: 0;
+  pointer-events: none;
+}
+
+.trigger:hover::before,
+.trigger:focus-visible::before {
+  color: #ff0040;
+  opacity: 0.9;
+  animation: trigger-glitch-red 0.45s steps(2, end) infinite;
+}
+
+.trigger:hover::after,
+.trigger:focus-visible::after {
+  color: #00e6ff;
+  opacity: 0.9;
+  animation: trigger-glitch-cyan 0.63s steps(2, end) infinite;
+}
+
+/* Two durations that do not divide evenly, so the channels keep drifting
+   out of step instead of locking into one repeating pattern. */
+@keyframes trigger-glitch-red {
+  0% { transform: translate(-2px, 0); clip-path: inset(8% 0 72% 0); }
+  20% { transform: translate(2px, -1px); clip-path: inset(48% 0 24% 0); }
+  40% { transform: translate(-3px, 1px); clip-path: inset(78% 0 6% 0); }
+  60% { transform: translate(1px, 0); clip-path: inset(18% 0 58% 0); }
+  80% { transform: translate(-1px, 1px); clip-path: inset(62% 0 14% 0); }
+  100% { transform: translate(2px, 0); clip-path: inset(32% 0 46% 0); }
+}
+
+@keyframes trigger-glitch-cyan {
+  0% { transform: translate(2px, 1px); clip-path: inset(60% 0 18% 0); }
+  20% { transform: translate(-2px, 0); clip-path: inset(14% 0 64% 0); }
+  40% { transform: translate(3px, -1px); clip-path: inset(36% 0 42% 0); }
+  60% { transform: translate(-1px, 1px); clip-path: inset(74% 0 8% 0); }
+  80% { transform: translate(2px, 0); clip-path: inset(26% 0 52% 0); }
+  100% { transform: translate(-2px, -1px); clip-path: inset(52% 0 30% 0); }
+}
+
+/* Keep the white, drop the jitter. */
+@media (prefers-reduced-motion: reduce) {
+  .trigger::before,
+  .trigger::after {
+    content: none;
+    animation: none;
+  }
 }
 
 /* The hero sits over the field. It takes no pointer events, so clicking and
