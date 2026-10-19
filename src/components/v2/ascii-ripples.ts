@@ -86,6 +86,22 @@ const RIPPLE_FADE = 2.2;
 const RIPPLE_BAND = 64; // px — width of the gaussian envelope
 const RIPPLE_WAVELENGTH = 0.085; // radians per px — gives the trailing rings
 const MAX_RIPPLES = 12;
+
+/* A perfectly round ring is the thing that reads as computer-generated, so each
+ * ripple gets its own lopsided outline from a few angular harmonics, and the
+ * band softens as it spreads the way a real disturbance disperses. */
+
+/** How far the ring may wander off a circle, as a fraction of its radius. */
+const RIPPLE_WOBBLE = 0.13;
+/** Harmonics the wobble is built from. Low, uneven counts read as a natural
+ *  lopsidedness; high or evenly spaced ones turn it into a flower. */
+const WOBBLE_HARMONICS = [2, 3, 5];
+const WOBBLE_MAX = Math.max(...WOBBLE_HARMONICS);
+/** How much that same wobble also varies brightness around the ring, so one
+ *  side of the wave carries more energy than the other. */
+const RIPPLE_SHADE = 0.35;
+/** Band widening per pixel of radius — the wave goes softer as it spreads. */
+const RIPPLE_DISPERSION = 0.0004;
 /** Below this a cell is left to the idle layer. */
 const ENERGY_FLOOR = 0.06;
 
@@ -95,6 +111,28 @@ interface Ripple {
   born: number;
   /** Distance to the furthest corner — how far this one has to travel. */
   reach: number;
+  /**
+   * Per-harmonic (sin, cos) coefficients giving this ripple its own outline.
+   * Stored pre-multiplied so the hot loop is a couple of multiply-adds rather
+   * than a `Math.sin` per cell.
+   */
+  wobble: Float64Array;
+}
+
+/** Random, normalised harmonic coefficients — a fresh silhouette per ripple. */
+function makeWobble(): Float64Array {
+  const coefficients = new Float64Array(WOBBLE_HARMONICS.length * 2);
+  let total = 0;
+  for (let k = 0; k < WOBBLE_HARMONICS.length; k++) {
+    const weight = 0.4 + Math.random() * 0.6;
+    const phase = Math.random() * Math.PI * 2;
+    coefficients[k * 2] = weight * Math.cos(phase);
+    coefficients[k * 2 + 1] = weight * Math.sin(phase);
+    total += weight;
+  }
+  // Normalised so the summed wobble stays inside ±1 however the weights fell.
+  for (let i = 0; i < coefficients.length; i++) coefficients[i] /= total;
+  return coefficients;
 }
 
 function sampleGradient(stops: RGB[], t: number): RGB {
@@ -217,7 +255,13 @@ export class AsciiRipples {
   /** Start a ripple at a point in CSS pixels relative to the canvas. */
   ripple(x: number, y: number): void {
     if (this.ripples.length >= MAX_RIPPLES) this.ripples.shift();
-    this.ripples.push({ x, y, born: performance.now(), reach: this.diagonalFrom(x, y) });
+    this.ripples.push({
+      x,
+      y,
+      born: performance.now(),
+      reach: this.diagonalFrom(x, y),
+      wobble: makeWobble(),
+    });
     this.start();
   }
 
@@ -457,7 +501,6 @@ export class AsciiRipples {
 
     this.energy.fill(0);
     this.energyDirty = true;
-    const reachPad = RIPPLE_BAND * 2;
 
     for (let r = this.ripples.length - 1; r >= 0; r--) {
       const ripple = this.ripples[r];
@@ -471,7 +514,12 @@ export class AsciiRipples {
       }
 
       const amp = Math.min(1, life * RIPPLE_FADE);
-      const reach = radius + reachPad;
+      // The band softens as the wave spreads.
+      const band = RIPPLE_BAND * (1 + radius * RIPPLE_DISPERSION);
+      const pad = band * 2;
+      const wob = ripple.wobble;
+      // The ring can bulge outward by this much, so the bbox has to allow for it.
+      const reach = radius * (1 + RIPPLE_WOBBLE) + pad;
       const c0 = Math.max(0, Math.floor((ripple.x - reach) / this.cellW));
       const c1 = Math.min(this.cols - 1, Math.ceil((ripple.x + reach) / this.cellW));
       const r0 = Math.max(0, Math.floor((ripple.y - reach) / this.cellH));
@@ -482,11 +530,35 @@ export class AsciiRipples {
         const base = row * this.cols;
         for (let col = c0; col <= c1; col++) {
           const dx = (col + 0.5) * this.cellW - ripple.x;
-          const delta = Math.sqrt(dx * dx + dy * dy) - radius;
-          if (delta < -reachPad || delta > reachPad) continue;
-          const envelope = Math.exp(-(delta * delta) / (RIPPLE_BAND * RIPPLE_BAND));
+          const d = Math.sqrt(dx * dx + dy * dy);
+
+          // Walk the harmonics up from the cell's own angle by repeated complex
+          // multiplication — sin(k0)/cos(k0) without a trig call per cell.
+          const inv = d > 1e-6 ? 1 / d : 0;
+          const cos1 = dx * inv;
+          const sin1 = dy * inv;
+          let cosK = cos1;
+          let sinK = sin1;
+          let offset = 0;
+          for (let k = 1, h = 0; k <= WOBBLE_MAX && h < WOBBLE_HARMONICS.length; k++) {
+            if (k > 1) {
+              const nextCos = cosK * cos1 - sinK * sin1;
+              sinK = sinK * cos1 + cosK * sin1;
+              cosK = nextCos;
+            }
+            if (k === WOBBLE_HARMONICS[h]) {
+              offset += wob[h * 2] * sinK + wob[h * 2 + 1] * cosK;
+              h++;
+            }
+          }
+
+          const delta = d - radius * (1 + offset * RIPPLE_WOBBLE);
+          if (delta < -pad || delta > pad) continue;
+          const envelope = Math.exp(-(delta * delta) / (band * band));
           const wave = Math.cos(delta * RIPPLE_WAVELENGTH);
-          this.energy[base + col] += Math.abs(envelope * wave) * amp;
+          // Same wobble shades the ring, so the energy is uneven around it.
+          const shade = Math.max(0, 1 + offset * RIPPLE_SHADE);
+          this.energy[base + col] += Math.abs(envelope * wave) * amp * shade;
         }
       }
     }
