@@ -1,13 +1,14 @@
 /**
- * A full-viewport field of random ASCII that ripples outward from a pointer tap.
+ * A full-viewport field of random ASCII that ripples outward from a pointer tap,
+ * with the patch under the cursor reading clearer than the rest.
  *
  * Framework-free on purpose — the React component is just a mount point.
  *
  * Drawing is split in two so a frame stays cheap. The dim idle field lives on an
  * offscreen layer that only changes when a cell shimmers, so a frame is one blit
- * of that layer plus the handful of cells a ripple is currently lighting. Glyphs
- * come from an atlas holding one tile per glyph per brightness step, which makes
- * drawing a cell a `drawImage` with no canvas state changes in between.
+ * of that layer plus the cells the cursor halo and any ripples are lighting.
+ * Glyphs come from an atlas holding one tile per glyph per palette step, which
+ * makes drawing a cell a `drawImage` with no canvas state changes in between.
  */
 
 type RGB = [number, number, number];
@@ -23,18 +24,58 @@ const FONT_STACK = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 const FONT_SIZE = 14;
 const LINE_HEIGHT = 1.45;
 
-/** Brightness steps baked into the atlas. Step 0 is the idle field. */
-const LEVELS = 8;
-const COLOR_IDLE: RGB = [62, 64, 72];
-const COLOR_CREST: RGB = [255, 238, 216];
+/** Steps in each palette ramp. More steps, smoother gradient. */
+const LEVELS = 10;
 
-/** Share of cells showing an idle glyph. The rest stay dark until a ripple hits. */
+/* ── Opacity ──────────────────────────────────────────────────────────────
+ * MAX_OPACITY is the master knob. Every other opacity here is a fraction of
+ * it, so changing this one number moves the whole field — idle, halo and
+ * ripples together — and nothing can ever paint brighter than it.
+ *
+ * Opacity is baked into the atlas colours rather than set per draw: against a
+ * black page the result is identical, and it keeps a cell down to one
+ * `drawImage` with no canvas state changes.
+ */
+
+/** Ceiling for everything drawn, so foreground content stays readable on top. */
+const MAX_OPACITY = 0.7;
+
+/** Idle cells take a random opacity in this band. The spread is what gives the
+ *  field its uneven, twinkling look instead of one flat wash. */
+const IDLE_OPACITY_MIN = 0.1;
+const IDLE_OPACITY_MAX = 0.4;
+
+/** Opacity right under the cursor, where the ASCII should read clearest. */
+const HALO_OPACITY = 1;
+
+/** Opacity at a ripple's crest. */
+const RIPPLE_OPACITY = 1;
+
+/** The field itself — idle glyphs and the clearer patch under the cursor. */
+const FIELD_COLOR: RGB = [206, 226, 236];
+
+/** A ripple runs along this gradient, anchored on #00E6FF. */
+const RIPPLE_GRADIENT: RGB[] = [
+  [0, 86, 150], // deep blue — the faint leading edge
+  [0, 230, 255], // #00E6FF
+  [212, 251, 255], // pale cyan at the crest
+];
+
+/** Share of cells showing an idle glyph. The rest stay dark until something hits. */
 const FIELD_DENSITY = 0.34;
 /** Cells re-rolled each shimmer, so the field never looks frozen. */
 const SHIMMER_PER_TICK = 18;
 /** Gap between shimmers. Decoupled from the frame rate so the field drifts at
  *  the same pace on a 60Hz and a 120Hz screen. */
 const SHIMMER_INTERVAL = 55; // ms
+
+/** Radius of the clearer patch tracking the cursor. */
+const HALO_RADIUS = 170; // px
+/** Inner share of that radius held at full HALO_OPACITY before the falloff
+ *  starts, so the centre actually reaches the opacity the knob names. */
+const HALO_CORE = 0.15;
+/** Below this a cell is left to the idle layer. */
+const HALO_FLOOR = 0.01;
 
 const RIPPLE_SPEED = 620; // px per second
 /** A ripple outlives the trip to its furthest corner by this much, so the wave
@@ -56,12 +97,30 @@ interface Ripple {
   reach: number;
 }
 
-function levelColor(level: number): string {
-  const t = LEVELS > 1 ? level / (LEVELS - 1) : 1;
-  const [r, g, b] = COLOR_IDLE.map((from, i) =>
-    Math.round(from + (COLOR_CREST[i] - from) * t)
-  );
+function sampleGradient(stops: RGB[], t: number): RGB {
+  const x = Math.max(0, Math.min(0.999999, t)) * (stops.length - 1);
+  const i = Math.floor(x);
+  const f = x - i;
+  const a = stops[i];
+  const b = stops[Math.min(stops.length - 1, i + 1)];
+  return [0, 1, 2].map((k) => a[k] + (b[k] - a[k]) * f) as RGB;
+}
+
+/** Opacity against a black page, capped and folded into the colour. */
+function bake(color: RGB, opacity: number): string {
+  const a = Math.max(0, Math.min(MAX_OPACITY, opacity));
+  const [r, g, b] = color.map((c) => Math.round(c * a));
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+/** Fraction of MAX_OPACITY an atlas step carries. */
+function stepFraction(step: number): number {
+  return (step + 1) / LEVELS;
+}
+
+/** Nearest atlas step to a given fraction of MAX_OPACITY. */
+function stepFor(fraction: number): number {
+  return Math.max(0, Math.min(LEVELS - 1, Math.round(fraction * LEVELS) - 1));
 }
 
 export class AsciiRipples {
@@ -86,17 +145,29 @@ export class AsciiRipples {
   private glyph = new Uint8Array(0);
   /** Whether the idle layer shows this cell's glyph. */
   private shown = new Uint8Array(0);
+  /** Palette step this cell sits at when idle — randomised per cell. */
+  private idleStep = new Uint8Array(0);
   private energy = new Float32Array(0);
+  private halo = new Float32Array(0);
 
   private ripples: Ripple[] = [];
   private frame = 0;
   private running = false;
   private destroyed = false;
   private lastShimmer = 0;
-  /** Whether `energy` still holds a ring that needs clearing off the canvas. */
+  /** Whether `energy` / `halo` still hold something that needs clearing off. */
   private energyDirty = false;
-  /** Honour the OS setting by dropping the ambient shimmer. Taps still ripple,
-   *  since those are asked for rather than autoplaying. */
+  private haloDirty = false;
+
+  private pointerInside = false;
+  private pointerX = 0;
+  private pointerY = 0;
+  /** Where the halo buffer was last computed, so a still cursor costs nothing. */
+  private haloX = Number.NaN;
+  private haloY = Number.NaN;
+
+  /** Honour the OS setting by dropping the ambient shimmer. Taps and the cursor
+   *  halo still respond, since those answer something the user just did. */
   private reduceMotion = false;
   private motionQuery: MediaQueryList | null = null;
   private observer: ResizeObserver | null = null;
@@ -123,6 +194,9 @@ export class AsciiRipples {
     this.observer.observe(this.canvas);
 
     this.canvas.addEventListener('pointerdown', this.handlePointerDown);
+    this.canvas.addEventListener('pointermove', this.handlePointerMove);
+    this.canvas.addEventListener('pointerleave', this.handlePointerLeave);
+    this.canvas.addEventListener('pointercancel', this.handlePointerLeave);
 
     this.resize();
   }
@@ -135,6 +209,9 @@ export class AsciiRipples {
     this.motionQuery?.removeEventListener('change', this.handleMotionChange);
     this.motionQuery = null;
     this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
+    this.canvas.removeEventListener('pointermove', this.handlePointerMove);
+    this.canvas.removeEventListener('pointerleave', this.handlePointerLeave);
+    this.canvas.removeEventListener('pointercancel', this.handlePointerLeave);
   }
 
   /** Start a ripple at a point in CSS pixels relative to the canvas. */
@@ -156,9 +233,30 @@ export class AsciiRipples {
   };
 
   private handlePointerDown = (event: PointerEvent): void => {
-    const rect = this.canvas.getBoundingClientRect();
-    this.ripple(event.clientX - rect.left, event.clientY - rect.top);
+    const { x, y } = this.toLocal(event);
+    this.pointerInside = true;
+    this.pointerX = x;
+    this.pointerY = y;
+    this.ripple(x, y);
   };
+
+  private handlePointerMove = (event: PointerEvent): void => {
+    const { x, y } = this.toLocal(event);
+    this.pointerInside = true;
+    this.pointerX = x;
+    this.pointerY = y;
+    this.start();
+  };
+
+  private handlePointerLeave = (): void => {
+    this.pointerInside = false;
+    this.start();
+  };
+
+  private toLocal(event: PointerEvent): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  }
 
   private resize(): void {
     const rect = this.canvas.getBoundingClientRect();
@@ -180,11 +278,10 @@ export class AsciiRipples {
 
     this.glyph = new Uint8Array(cells);
     this.shown = new Uint8Array(cells);
+    this.idleStep = new Uint8Array(cells);
     this.energy = new Float32Array(cells);
-    for (let i = 0; i < cells; i++) {
-      this.glyph[i] = (Math.random() * GLYPHS.length) | 0;
-      this.shown[i] = Math.random() < FIELD_DENSITY ? 1 : 0;
-    }
+    this.halo = new Float32Array(cells);
+    for (let i = 0; i < cells; i++) this.rollCell(i);
 
     for (const target of [this.canvas, this.idle]) {
       target.width = Math.round(width * dpr);
@@ -195,14 +292,28 @@ export class AsciiRipples {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.idleCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    this.haloX = Number.NaN;
+    this.haloY = Number.NaN;
     this.renderIdleLayer();
     this.present();
     // The shimmer should be running before anyone clicks; with motion off there
-    // is nothing to animate until a tap comes in.
+    // is nothing to animate until a tap or the cursor comes in.
     if (!this.reduceMotion || this.ripples.length) this.start();
   }
 
-  /** One tile per glyph per brightness step, rendered at device resolution. */
+  /** Give a cell a fresh glyph, visibility and idle opacity. */
+  private rollCell(i: number): void {
+    this.glyph[i] = (Math.random() * GLYPHS.length) | 0;
+    this.shown[i] = Math.random() < FIELD_DENSITY ? 1 : 0;
+    this.idleStep[i] = stepFor(
+      IDLE_OPACITY_MIN + Math.random() * (IDLE_OPACITY_MAX - IDLE_OPACITY_MIN)
+    );
+  }
+
+  /**
+   * One tile per glyph per palette step, at device resolution. Rows 0..LEVELS-1
+   * are the field ramp; rows LEVELS..2*LEVELS-1 are the ripple gradient.
+   */
   private buildAtlas(): void {
     const { atlasCtx, dpr } = this;
     const probeFont = `${FONT_SIZE * dpr}px ${FONT_STACK}`;
@@ -215,15 +326,20 @@ export class AsciiRipples {
     this.tileH = Math.max(1, Math.ceil(this.cellH * dpr));
 
     this.atlas.width = this.tileW * GLYPHS.length;
-    this.atlas.height = this.tileH * LEVELS;
+    this.atlas.height = this.tileH * LEVELS * 2;
 
     // Resizing the canvas cleared the context state, so set it up again.
     atlasCtx.font = probeFont;
     atlasCtx.textAlign = 'center';
     atlasCtx.textBaseline = 'middle';
-    for (let level = 0; level < LEVELS; level++) {
-      atlasCtx.fillStyle = levelColor(level);
-      const y = level * this.tileH + this.tileH / 2;
+    for (let row = 0; row < LEVELS * 2; row++) {
+      const step = row % LEVELS;
+      const opacity = MAX_OPACITY * stepFraction(step);
+      atlasCtx.fillStyle =
+        row < LEVELS
+          ? bake(FIELD_COLOR, opacity)
+          : bake(sampleGradient(RIPPLE_GRADIENT, step / (LEVELS - 1)), opacity);
+      const y = row * this.tileH + this.tileH / 2;
       for (let g = 0; g < GLYPHS.length; g++) {
         atlasCtx.fillText(GLYPHS[g], g * this.tileW + this.tileW / 2, y);
       }
@@ -233,14 +349,14 @@ export class AsciiRipples {
   private blit(
     ctx: CanvasRenderingContext2D,
     glyph: number,
-    level: number,
+    row: number,
     x: number,
     y: number
   ): void {
     ctx.drawImage(
       this.atlas,
       glyph * this.tileW,
-      level * this.tileH,
+      row * this.tileH,
       this.tileW,
       this.tileH,
       x,
@@ -258,7 +374,13 @@ export class AsciiRipples {
       if (!this.shown[i]) continue;
       const col = i % this.cols;
       const row = (i / this.cols) | 0;
-      this.blit(idleCtx, this.glyph[i], 0, col * this.cellW, row * this.cellH);
+      this.blit(
+        idleCtx,
+        this.glyph[i],
+        this.idleStep[i],
+        col * this.cellW,
+        row * this.cellH
+      );
     }
   }
 
@@ -269,13 +391,56 @@ export class AsciiRipples {
     this.lastShimmer = now;
     for (let n = 0; n < SHIMMER_PER_TICK; n++) {
       const i = (Math.random() * cells) | 0;
-      this.glyph[i] = (Math.random() * GLYPHS.length) | 0;
-      this.shown[i] = Math.random() < FIELD_DENSITY ? 1 : 0;
+      this.rollCell(i);
       const x = (i % this.cols) * this.cellW;
       const y = ((i / this.cols) | 0) * this.cellH;
       this.idleCtx.fillStyle = '#000';
       this.idleCtx.fillRect(x, y, this.cellW, this.cellH);
-      if (this.shown[i]) this.blit(this.idleCtx, this.glyph[i], 0, x, y);
+      if (this.shown[i]) this.blit(this.idleCtx, this.glyph[i], this.idleStep[i], x, y);
+    }
+    return true;
+  }
+
+  /** Returns whether the canvas needs repainting. */
+  private computeHalo(): boolean {
+    if (!this.pointerInside) {
+      if (!this.haloDirty) return false;
+      this.halo.fill(0);
+      this.haloDirty = false;
+      this.haloX = Number.NaN;
+      this.haloY = Number.NaN;
+      return true;
+    }
+    // A cursor that has not moved re-uses the buffer from last time.
+    if (this.pointerX === this.haloX && this.pointerY === this.haloY) return false;
+
+    this.halo.fill(0);
+    this.haloDirty = true;
+    this.haloX = this.pointerX;
+    this.haloY = this.pointerY;
+
+    const c0 = Math.max(0, Math.floor((this.pointerX - HALO_RADIUS) / this.cellW));
+    const c1 = Math.min(
+      this.cols - 1,
+      Math.ceil((this.pointerX + HALO_RADIUS) / this.cellW)
+    );
+    const r0 = Math.max(0, Math.floor((this.pointerY - HALO_RADIUS) / this.cellH));
+    const r1 = Math.min(
+      this.rows - 1,
+      Math.ceil((this.pointerY + HALO_RADIUS) / this.cellH)
+    );
+
+    for (let row = r0; row <= r1; row++) {
+      const dy = (row + 0.5) * this.cellH - this.pointerY;
+      const base = row * this.cols;
+      for (let col = c0; col <= c1; col++) {
+        const dx = (col + 0.5) * this.cellW - this.pointerX;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d >= HALO_RADIUS) continue;
+        const core = HALO_RADIUS * HALO_CORE;
+        const f = d <= core ? 1 : (HALO_RADIUS - d) / (HALO_RADIUS - core);
+        this.halo[base + col] = f * f;
+      }
     }
     return true;
   }
@@ -293,7 +458,6 @@ export class AsciiRipples {
     this.energy.fill(0);
     this.energyDirty = true;
     const reachPad = RIPPLE_BAND * 2;
-    let alive = false;
 
     for (let r = this.ripples.length - 1; r >= 0; r--) {
       const ripple = this.ripples[r];
@@ -305,7 +469,6 @@ export class AsciiRipples {
         this.ripples.splice(r, 1);
         continue;
       }
-      alive = true;
 
       const amp = Math.min(1, life * RIPPLE_FADE);
       const reach = radius + reachPad;
@@ -327,7 +490,7 @@ export class AsciiRipples {
         }
       }
     }
-    return alive || this.energyDirty;
+    return true;
   }
 
   /** Distance to the furthest corner — how far a ripple here has to travel to
@@ -338,27 +501,45 @@ export class AsciiRipples {
     return Math.max(1, Math.sqrt(dx * dx + dy * dy));
   }
 
-  /** Blit the idle layer, then overdraw the cells a ripple is lighting. */
+  /** Blit the idle layer, then overdraw the cells the halo and ripples are lighting. */
   private present(): void {
     const { ctx } = this;
     ctx.drawImage(this.idle, 0, 0, this.width, this.height);
 
     ctx.fillStyle = '#000';
+    const top = LEVELS - 1;
+    const haloTop = stepFor(HALO_OPACITY);
+    const rippleTop = stepFor(RIPPLE_OPACITY);
     for (let i = 0; i < this.energy.length; i++) {
       const e = this.energy[i];
-      if (e <= ENERGY_FLOOR) continue;
-      const t = Math.min(1, e);
+      const h = this.halo[i];
+      if (e <= ENERGY_FLOOR && h <= HALO_FLOOR) continue;
+
       const x = (i % this.cols) * this.cellW;
       const y = ((i / this.cols) | 0) * this.cellH;
-      // Faint cells just light up whatever ASCII was already there; the crest
-      // swaps in the density ramp so the ring reads as a wave.
-      const glyph =
-        t > 0.25
-          ? RAMP_INDEX[Math.min(RAMP_INDEX.length - 1, (t * RAMP_INDEX.length) | 0)]
-          : this.glyph[i];
-      const level = Math.max(1, Math.min(LEVELS - 1, Math.round(t * (LEVELS - 1))));
+      let glyph: number;
+      let row: number;
+
+      if (e > ENERGY_FLOOR) {
+        // Clamped, so overlapping ripples still respect the opacity ceiling.
+        const t = Math.min(1, e);
+        // Faint cells just light up whatever ASCII was already there; the crest
+        // swaps in the density ramp so the ring reads as a wave.
+        glyph =
+          t > 0.25
+            ? RAMP_INDEX[Math.min(RAMP_INDEX.length - 1, (t * RAMP_INDEX.length) | 0)]
+            : this.glyph[i];
+        row = LEVELS + Math.max(1, Math.round(t * rippleTop));
+      } else {
+        // The halo lifts a cell from its own idle opacity toward HALO_OPACITY,
+        // and reveals cells the idle layer was hiding.
+        glyph = this.glyph[i];
+        const base = this.idleStep[i];
+        row = Math.min(top, Math.round(base + h * Math.max(0, haloTop - base)));
+      }
+
       ctx.fillRect(x, y, this.cellW, this.cellH);
-      this.blit(ctx, glyph, level, x, y);
+      this.blit(ctx, glyph, row, x, y);
     }
   }
 
@@ -378,13 +559,14 @@ export class AsciiRipples {
     if (this.destroyed) return;
 
     const shimmered = this.reduceMotion ? false : this.shimmer(now);
+    const haloed = this.computeHalo();
     const rippling = this.computeEnergy(now);
     // Skip the repaint on frames where nothing actually changed.
-    if (shimmered || rippling) this.present();
+    if (shimmered || haloed || rippling) this.present();
 
-    // With motion off there is no shimmer to draw, so idle instead of burning
-    // frames on a still image. The next tap restarts the loop.
-    if (this.reduceMotion && !rippling) {
+    // With motion off there is no shimmer to draw, so idle once the ripples and
+    // the halo are done. The next tap or cursor move restarts the loop.
+    if (this.reduceMotion && !rippling && !this.haloDirty) {
       this.stop();
       return;
     }

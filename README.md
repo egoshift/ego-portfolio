@@ -18,7 +18,10 @@ v1 is the macOS-desktop portfolio and is frozen at `/v1/`. v2 has taken over the
 root URL: a single non-scrolling screen holding a field of random ASCII that
 ripples outward from a tap. The wave lives in `src/components/v2/ascii-ripples.ts`
 — that file's header explains how a frame is drawn, and the constants at the top
-(speed, band width, wavelength, colours, field density) are the tuning knobs.
+are the tuning knobs. `MAX_OPACITY` is the master one: every other opacity is a
+fraction of it, so lowering it dims the whole field at once and keeps foreground
+content readable. The rest cover ripple speed, band width, wavelength, the
+cursor halo, the colour gradient and field density.
 
 ## Layout
 
