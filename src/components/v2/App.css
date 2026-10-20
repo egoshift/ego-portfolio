@@ -416,11 +416,34 @@ body {
   top: 50%;
   left: 50%;
 
-  font-size: clamp(0.7rem, 1.35vw, 1.25rem);
+  font-size: clamp(0.6rem, 1.35vw, 1.25rem);
   white-space: nowrap;
   color: #00e6ff;
 
   /* transform and opacity are written every frame, so keep them off the
      main thread's layout work */
   will-change: transform, opacity;
+}
+
+/* Circular grab area for the globe. Sized by word-globe.ts from the sphere's
+   own radius, so a drag anywhere on the sphere works while taps outside it
+   still fall through to the ripple field. */
+.globe__grab {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  width: var(--globe-size, 0);
+  height: var(--globe-size, 0);
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.globe__sphere[data-dragging='true'] .globe__grab {
+  cursor: grabbing;
 }

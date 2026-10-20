@@ -2,35 +2,7 @@ import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
 import { WordGlobe } from './word-globe';
-
-/**
- * Starter set, all drawn from what v1 already says about Ems rather than
- * invented: the stack from `constants/experiences.constants.ts`, and the four
- * sides the v1 About window switches between (💻 🏔️ 📷 🎨).
- */
-const WORDS = [
-  'Programming',
-  'Hiking',
-  'Photography',
-  'Art',
-  'React',
-  'Typescript',
-  'NestJS',
-  'NextJS',
-  'Nx',
-  'PostgreSQL',
-  'TailwindCSS',
-  'MaterialUI',
-  'Laravel',
-  'PHP',
-  'Code Igniter',
-  'jQuery',
-  'Bootstrap',
-  'MySQL',
-  'HTML',
-  'CSS',
-  'JS',
-];
+import { INTEREST_WORDS } from './interests.data';
 
 export default function Interests() {
   const globeRef = useRef<HTMLDivElement>(null);
@@ -56,9 +28,17 @@ export default function Interests() {
           so the two never write to the same element's transform. */}
       <motion.div className="globe" variants={spreadItem} custom={{ y: 0.4 }}>
         <div className="globe__sphere" ref={globeRef}>
-          {WORDS.map((word) => (
-            <span className="globe__word glitch" data-globe-word key={word}>
-              {word}
+          {/* Circular grab area, so a drag works anywhere on the sphere while
+              taps outside it still reach the ripple field. */}
+          <span className="globe__grab" aria-hidden="true" />
+          {INTEREST_WORDS.map(({ label, group }) => (
+            <span
+              className="globe__word glitch"
+              data-globe-word
+              data-group={group}
+              key={label}
+            >
+              {label}
             </span>
           ))}
         </div>
