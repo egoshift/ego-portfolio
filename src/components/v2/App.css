@@ -380,3 +380,47 @@ body {
 .back:focus-visible {
   color: #00e6ff;
 }
+
+/* ── Interests globe ──────────────────────────────────────────────────────
+   Click-through like the other panels. Individual words take pointer events
+   back, but only while they are on the near face — word-globe.ts sets that
+   inline per frame. */
+.interests {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  display: grid;
+  place-items: center;
+
+  font-family: Helvetica, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700;
+
+  pointer-events: none;
+}
+
+.globe {
+  width: 100%;
+  height: 100%;
+}
+
+.globe__sphere {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+}
+
+.globe__word {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  font-size: clamp(0.7rem, 1.35vw, 1.25rem);
+  white-space: nowrap;
+  color: #00e6ff;
+
+  /* transform and opacity are written every frame, so keep them off the
+     main thread's layout work */
+  will-change: transform, opacity;
+}
