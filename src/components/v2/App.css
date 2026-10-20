@@ -423,49 +423,60 @@ body {
 }
 
 .interests__intro {
-  max-width: 24ch;
+  width: 100%;
+  max-width: 22rem;
 }
 
-.interests__lead {
-  margin: 0;
-
-  font-size: clamp(1.1rem, 2.6vw, 2.5rem);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: #fff;
-  text-wrap: balance;
-}
-
-.interests__legend {
+/* Filter pills. Blue outline at rest, filled when that group is the only one
+   showing — clicking the filled one clears the filter again. */
+.filters {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.35em 1.2em;
+  flex-direction: column;
+  gap: clamp(0.45rem, 1.1vh, 0.8rem);
 
-  margin: 1.4em 0 0;
+  margin: 0;
   padding: 0;
 
   list-style: none;
-  font-size: clamp(0.62rem, 0.95vw, 0.9rem);
+}
+
+.filters__button {
+  display: block;
+  width: 100%;
+
+  appearance: none;
+  padding: clamp(0.6em, 1.4vh, 0.95em) 1em;
+
+  border: 3px solid #00e6ff;
+  border-radius: 999px;
+  background: none;
+
+  font: inherit;
+  font-size: clamp(0.8rem, 1.25vw, 1.2rem);
+  font-weight: 700;
   color: #00e6ff;
+  text-align: center;
+  white-space: nowrap;
+
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
 }
 
-@media (min-width: 900px) {
-  .interests__legend {
-    flex-direction: column;
-    justify-content: flex-start;
-  }
+.filters__button:hover {
+  background: rgb(0 230 255 / 0.12);
 }
 
-.interests__legend li {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5em;
+.filters__button[data-active] {
+  background: #00e6ff;
+  color: #000;
 }
 
-.interests__legend-count {
-  font-variant-numeric: tabular-nums;
-  color: #6f7f86;
+.filters__button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
 .globe {
@@ -484,6 +495,9 @@ body {
 
 .globe__word {
   position: absolute;
+  /* the globe is dragged by grabbing it, so the words must not select */
+  user-select: none;
+  -webkit-user-select: none;
   top: 50%;
   left: 50%;
 
@@ -501,6 +515,8 @@ body {
    still fall through to the ripple field. */
 .globe__grab {
   position: absolute;
+  user-select: none;
+  -webkit-user-select: none;
   top: 50%;
   left: 50%;
 

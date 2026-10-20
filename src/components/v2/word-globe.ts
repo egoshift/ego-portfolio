@@ -42,6 +42,11 @@ const THROW_SMOOTHING = 0.35;
 const MAX_THROW = 2.6;
 /** The far side never fades past this, so the globe stays legible through. */
 const MIN_OPACITY = 0.16;
+/** How long a filter change tears the words up for. */
+const GLITCH_MS = 460;
+/** New jitter this often, rather than every frame, so it reads as digital
+ *  stepping rather than a smooth blur. */
+const GLITCH_STEP_MS = 55;
 
 interface Point {
   x: number;
@@ -74,6 +79,10 @@ export class WordGlobe {
   private readonly container: HTMLElement;
   private words: HTMLElement[] = [];
   private points: Point[] = [];
+  /** Wall-clock time the glitch burst ends. */
+  private glitchUntil = 0;
+  /** Whether the last frame left a glitch style on the words to clear. */
+  private glitchPainted = false;
 
   private radius = 0;
   private yaw = 0;
@@ -121,6 +130,26 @@ export class WordGlobe {
     this.measure();
     // With motion off it still renders, just held still until dragged.
     if (!this.reduceMotion) this.start();
+  }
+
+  /**
+   * Re-reads the words and respaces them.
+   *
+   * Call after the rendered set changes: the points are recomputed for the new
+   * count, so a filtered subset spreads over the whole sphere instead of
+   * leaving holes where the hidden words used to sit.
+   */
+  refresh(): void {
+    this.words = [...this.container.querySelectorAll<HTMLElement>('[data-globe-word]')];
+    this.points = fibonacciSphere(this.words.length);
+    this.render();
+    if (!this.reduceMotion) this.start();
+  }
+
+  /** Tear the words up briefly — used when the filter changes. */
+  glitch(): void {
+    this.glitchUntil = performance.now() + GLITCH_MS;
+    this.start();
   }
 
   destroy(): void {
@@ -213,6 +242,11 @@ export class WordGlobe {
     const { radius } = this;
     if (!radius) return;
 
+    const now = performance.now();
+    const glitching = now < this.glitchUntil;
+    // Quantised, so every word re-rolls together on the same beat.
+    const step = Math.floor(now / GLITCH_STEP_MS);
+
     const fov = radius * FOV_RATIO;
     const cosYaw = Math.cos(this.yaw);
     const sinYaw = Math.sin(this.yaw);
@@ -238,13 +272,28 @@ export class WordGlobe {
         `translate3d(${(x * radius * perspective).toFixed(1)}px, ` +
         `${(y * radius * perspective).toFixed(1)}px, 0) ` +
         `translate(-50%, -50%) scale(${perspective.toFixed(3)})`;
-      word.style.opacity = (MIN_OPACITY + (1 - MIN_OPACITY) * depth).toFixed(3);
+      let opacity = MIN_OPACITY + (1 - MIN_OPACITY) * depth;
+
+      if (glitching) {
+        // Cheap deterministic hash per word per beat, so the jitter is varied
+        // but identical for every word within a step.
+        const noise = ((i * 2654435761 + step * 40503) % 1024) / 1024;
+        const offset = (1.5 + noise * 3.5) * (((i + step) & 1) === 0 ? 1 : -1);
+        word.style.textShadow = `${offset.toFixed(1)}px 0 #ff0040, ${(-offset).toFixed(1)}px 0 #00e6ff`;
+        opacity *= 0.55 + noise * 0.45;
+      } else if (this.glitchPainted) {
+        word.style.textShadow = '';
+      }
+
+      word.style.opacity = opacity.toFixed(3);
       word.style.zIndex = `${Math.round(depth * 1000)}`;
       // Only the near face is hoverable, so you cannot catch a word through
       // the middle of the sphere. While dragging nothing is, or the cursor
       // snags on words as they pass under it.
       word.style.pointerEvents = z > 0 && !this.dragging ? 'auto' : 'none';
     }
+
+    this.glitchPainted = glitching;
   }
 
   private start(): void {
@@ -287,7 +336,7 @@ export class WordGlobe {
     this.render();
 
     // With motion off there is nothing to animate once the throw settles.
-    if (this.reduceMotion && !this.dragging && !thrown) {
+    if (this.reduceMotion && !this.dragging && !thrown && now >= this.glitchUntil) {
       this.stop();
       return;
     }

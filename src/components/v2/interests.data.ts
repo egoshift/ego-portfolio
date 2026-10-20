@@ -15,9 +15,9 @@ export type InterestGroup = 'tooling' | 'testing' | 'interest';
 
 /** Display names, for a legend or filter UI. */
 export const INTEREST_GROUPS: Record<InterestGroup, string> = {
-  tooling: 'Stack & tooling',
+  tooling: 'Skills / Tools',
   testing: 'Testing',
-  interest: 'Outside work',
+  interest: 'Hobbies / Interests',
 };
 
 export interface InterestWord {
