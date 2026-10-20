@@ -390,18 +390,89 @@ body {
   inset: 0;
   z-index: 1;
 
+  /* Stacked by default: the intro on top, the globe taking what is left.
+     minmax(0, 1fr) rather than 1fr so the globe row can be shorter than its
+     content wants and never pushes the panel past the viewport. */
   display: grid;
-  place-items: center;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  gap: clamp(0.5rem, 2vh, 1.4rem);
+
+  padding: clamp(14px, 3vh, 34px);
 
   font-family: Helvetica, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 700;
+  text-align: center;
 
   pointer-events: none;
+}
+
+/* Wide enough for two columns: intro left, globe right and given the larger
+   share, since it is the thing worth looking at. */
+@media (min-width: 900px) {
+  .interests {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: clamp(1rem, 3vw, 3rem);
+
+    padding-inline: clamp(24px, 5vw, 80px);
+
+    text-align: left;
+  }
+}
+
+.interests__intro {
+  max-width: 24ch;
+}
+
+.interests__lead {
+  margin: 0;
+
+  font-size: clamp(1.1rem, 2.6vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.interests__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35em 1.2em;
+
+  margin: 1.4em 0 0;
+  padding: 0;
+
+  list-style: none;
+  font-size: clamp(0.62rem, 0.95vw, 0.9rem);
+  color: #00e6ff;
+}
+
+@media (min-width: 900px) {
+  .interests__legend {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+}
+
+.interests__legend li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+
+.interests__legend-count {
+  font-variant-numeric: tabular-nums;
+  color: #6f7f86;
 }
 
 .globe {
   width: 100%;
   height: 100%;
+  /* the sphere is sized off this box, so it must not collapse */
+  min-height: 0;
 }
 
 .globe__sphere {
