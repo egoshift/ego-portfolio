@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react';
+
 interface Props {
   /** Which trigger this is, so behaviour can be hung off it later. */
   name: string;
   className?: string;
-  /** Plain text — the glitch layers re-render it through `content: attr()`. */
-  children: string;
+  children: ReactNode;
   onTrigger?: (name: string) => void;
 }
 
@@ -18,7 +19,6 @@ export default function Trigger({ name, className, children, onTrigger }: Props)
       type="button"
       className={className ? `trigger ${className}` : 'trigger'}
       data-trigger={name}
-      data-text={children}
       tabIndex={-1}
       onClick={() => onTrigger?.(name)}
     >
