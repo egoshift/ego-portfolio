@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import ContributionCalendarGrid from './ContributionCalendar';
+import GlitchText from './GlitchText';
 import { spreadGroup, spreadItem } from './motion';
 import LinkedInIcon from '../../assets/linkedin.svg?react';
 import EmailIcon from '../../assets/email.svg?react';
@@ -47,7 +48,7 @@ export default function About() {
             // Fan out from the middle of the row.
             custom={{ x: i - (DISCIPLINES.length - 1) / 2 }}
           >
-            {discipline}
+            <GlitchText>{discipline}</GlitchText>
           </motion.li>
         ))}
       </ul>
@@ -74,8 +75,8 @@ export default function About() {
 
       <motion.p className="about__bio" variants={spreadItem} custom={{ y: 1 }}>
         I am a Full-stack Developer based in{' '}
-        <span className="about__accent">Cebu, Philippines</span> who loves to work{' '}
-        <span className="about__accent">whimsically</span>!
+        <GlitchText className="about__accent">Cebu, Philippines</GlitchText> who loves
+        to work <GlitchText className="about__accent">whimsically</GlitchText>!
       </motion.p>
     </motion.div>
   );

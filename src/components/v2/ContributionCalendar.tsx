@@ -69,9 +69,6 @@ export default function ContributionCalendarGrid() {
           </div>
         ))}
       </div>
-      <figcaption className="calendar__caption">
-        {calendar.total.toLocaleString()} contributions in the last year
-      </figcaption>
     </figure>
   );
 }
