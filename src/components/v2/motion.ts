@@ -94,19 +94,25 @@ export const markGlitch: Variants = {
       duration: 0.44,
       times: [0, 0.18, 0.36, 0.56, 0.78, 1],
       ease: 'linear',
+      // Last to arrive. The About panel staggers ten items and its springs
+      // are still settling at ~1.27s, so anything shorter than this and the
+      // mark beats the content it belongs to.
+      delay: 0.95,
     },
   },
   exit: {
     opacity: [1, 0.5, 1, 0.2, 0],
     x: [0, 3, -5, 7, -12],
     '--split': [0, 4, -6, 9, 12],
-    transition: { duration: 0.3, times: [0, 0.25, 0.5, 0.75, 1], ease: 'linear' },
+    // First to go, and quicker than the panel's own exit, so the mark is
+    // gone before the content starts scattering.
+    transition: { duration: 0.22, times: [0, 0.25, 0.5, 0.75, 1], ease: 'linear' },
   },
 };
 
 /** Same entrance and exit without the tearing, for prefers-reduced-motion. */
 export const markFade: Variants = {
   initial: { opacity: 0 },
-  enter: { opacity: 1, transition: { duration: 0.2 } },
+  enter: { opacity: 1, transition: { duration: 0.2, delay: 0.95 } },
   exit: { opacity: 0, transition: { duration: 0.15 } },
 };

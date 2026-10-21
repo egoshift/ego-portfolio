@@ -632,3 +632,25 @@ body {
     drop-shadow(2px 0 #ff0040)
     drop-shadow(-2px 0 #00e6ff);
 }
+
+/* ── Loading ──────────────────────────────────────────────────────────────
+   The same globe the interests view uses, carrying only dots, so the wait is
+   a preview of the thing being waited for. */
+.loader {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  display: grid;
+  place-items: center;
+
+  pointer-events: none;
+}
+
+.loader__sphere {
+  position: relative;
+
+  /* square, and small enough to sit comfortably in a short window */
+  width: min(62vw, 54vh);
+  height: min(62vw, 54vh);
+}
