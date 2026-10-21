@@ -633,3 +633,293 @@ body {
     drop-shadow(-2px 0 #00e6ff);
 }
 
+
+/* ── Work panel ───────────────────────────────────────────────────────────
+   The timeline behind "Developer". Click-through like the other panels; only
+   the timeline nodes take pointer events back. Everything is sized off the
+   viewport, because this page still never scrolls. */
+.work {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  display: grid;
+  /* Hung from the top rather than centred: the two jobs have different
+     amounts to say, and centring made the line jump up and down as you
+     switched between them. The body takes whatever height is left, so it can
+     bound its own scroll instead of running off the bottom of the page. */
+  grid-template-rows: auto minmax(0, 1fr);
+  justify-items: center;
+  gap: clamp(1.1rem, 4vh, 3rem);
+
+  padding: max(var(--mark-space), 14vh) clamp(20px, 5vw, 80px)
+    clamp(14px, 3vh, 34px);
+
+  font-family: Helvetica, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+
+  pointer-events: none;
+}
+
+.work__track,
+.work__body {
+  width: min(76rem, 92vw);
+}
+
+.work__body {
+  min-height: 0;
+}
+
+/* Where it fits — which is every desktop size tested — the panel stays
+   click-through and the whole page keeps rippling. Where it cannot, the text
+   has to be reachable, so this one block takes the scroll and the pointer
+   events that scrolling it needs. The page itself still never scrolls. */
+@media (max-width: 899px), (max-height: 640px) {
+  .work__body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    pointer-events: auto;
+    scrollbar-color: #00e6ff transparent;
+    scrollbar-width: thin;
+  }
+
+  .work__body::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .work__body::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #00e6ff;
+  }
+
+  .work__body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* The line runs from the first job to today. Years are the small dots, jobs
+   are the ones you can click, and the cap on the right is now. */
+.timeline {
+  --node: clamp(15px, min(2vw, 3vh), 26px);
+
+  position: relative;
+  height: calc(var(--node) * 1.6);
+}
+
+.timeline__line {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+
+  height: clamp(4px, 0.55vh, 7px);
+  transform: translateY(-50%);
+
+  border-radius: 999px;
+  background: #00e6ff;
+}
+
+.timeline__tick,
+.timeline__now {
+  position: absolute;
+  top: 50%;
+
+  border-radius: 50%;
+  background: #00e6ff;
+  transform: translate(-50%, -50%);
+}
+
+.timeline__tick {
+  width: calc(var(--node) * 0.52);
+  height: calc(var(--node) * 0.52);
+}
+
+/* Today, at the end of the line. */
+.timeline__now {
+  left: 100%;
+
+  width: calc(var(--node) * 1.3);
+  height: calc(var(--node) * 1.3);
+}
+
+.timeline__node {
+  position: absolute;
+  top: 50%;
+
+  appearance: none;
+  width: var(--node);
+  height: var(--node);
+  padding: 0;
+  border: 0;
+
+  border-radius: 50%;
+  background: #00e6ff;
+  transform: translate(-50%, -50%);
+
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    width 0.22s cubic-bezier(0.34, 1.4, 0.64, 1),
+    height 0.22s cubic-bezier(0.34, 1.4, 0.64, 1),
+    box-shadow 0.22s ease;
+}
+
+.timeline__node:hover {
+  box-shadow: 0 0 0 calc(var(--node) * 0.28) rgb(0 230 255 / 0.25);
+}
+
+/* The job being shown, grown off the line so it reads as the one selected. */
+.timeline__node[data-active] {
+  width: calc(var(--node) * 1.7);
+  height: calc(var(--node) * 1.7);
+}
+
+.timeline__node:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+/* Names the node for a screen reader without putting a label on the line. */
+.timeline__node-label {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline__node {
+    transition: none;
+  }
+}
+
+/* Switching jobs remounts this, so the fade replays each time. */
+.work__swap {
+  animation: work-swap 0.34s ease both;
+}
+
+@keyframes work-swap {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work__swap {
+    animation: none;
+  }
+}
+
+.work__heading {
+  margin-bottom: clamp(0.9rem, 3.4vh, 2.4rem);
+}
+
+.work__role {
+  margin: 0;
+
+  font-size: clamp(1.25rem, min(3vw, 4.4vh), 2.7rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #00e6ff;
+}
+
+.work__company {
+  margin: 0.2em 0 0;
+
+  font-size: clamp(0.8rem, min(1.45vw, 2.3vh), 1.35rem);
+  line-height: 1.2;
+}
+
+.work__period {
+  margin: 0.35em 0 0;
+
+  font-size: clamp(0.6rem, min(0.95vw, 1.6vh), 0.92rem);
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  color: #6f7f86;
+}
+
+/* Stacked on narrow screens, side by side once there is room for two. */
+.work__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1rem, 3vh, 2rem);
+
+  text-align: left;
+}
+
+@media (min-width: 900px) {
+  .work__columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 4.5rem);
+  }
+}
+
+.work__label {
+  margin: 0 0 clamp(0.5rem, 1.4vh, 0.95rem);
+  padding-bottom: clamp(0.3rem, 0.8vh, 0.55rem);
+
+  border-bottom: 2px solid rgb(0 230 255 / 0.35);
+
+  font-size: clamp(0.6rem, min(0.95vw, 1.6vh), 0.92rem);
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #00e6ff;
+}
+
+.work__duties,
+.work__projects {
+  display: grid;
+  gap: clamp(0.35rem, 1.1vh, 0.75rem);
+
+  margin: 0;
+  padding: 0;
+
+  font-size: clamp(0.6rem, min(0.92vw, 1.55vh), 0.95rem);
+  font-weight: 400;
+  line-height: 1.4;
+  color: #c3ced3;
+
+  list-style: none;
+}
+
+/* A dash rather than a bullet glyph, so the text hangs off a straight edge. */
+.work__duties li {
+  padding-left: 1em;
+  text-indent: -1em;
+}
+
+.work__duties li::before {
+  content: '— ';
+  color: #00e6ff;
+}
+
+.work__projects li {
+  display: grid;
+  gap: 0.15em;
+}
+
+.work__project-title {
+  font-weight: 700;
+  color: #fff;
+}
+
+.work__project-detail {
+  color: #9aa8ae;
+}

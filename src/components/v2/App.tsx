@@ -3,11 +3,12 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import AsciiField from './AsciiField';
 import Hero from './Hero';
 import About from './About';
+import Work from './Work';
 import Interests from './Interests';
 import { useLoadProgress } from './use-load-progress';
 import { markFade, markGlitch } from './motion';
 
-type View = 'hero' | 'about' | 'interests';
+type View = 'hero' | 'about' | 'work' | 'interests';
 
 export default function AppV2() {
   const [view, setView] = useState<View>('hero');
@@ -33,6 +34,7 @@ export default function AppV2() {
 
   const handleTrigger = useCallback((name: string) => {
     if (name === 'about') setView('about');
+    if (name === 'work') setView('work');
     if (name === 'interests') setView('interests');
   }, []);
 
@@ -73,6 +75,7 @@ export default function AppV2() {
       <AnimatePresence mode="wait">
         {ready && view === 'hero' && <Hero key="hero" onTrigger={handleTrigger} />}
         {ready && view === 'about' && <About key="about" />}
+        {ready && view === 'work' && <Work key="work" />}
         {ready && view === 'interests' && <Interests key="interests" />}
       </AnimatePresence>
     </main>
