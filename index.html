@@ -23,13 +23,19 @@
     <link rel="preload" as="image" href="/tech/mui.png" />
     <link rel="preload" as="image" href="/tech/nx.png" />
     <style>
-      /* Boot sphere. Plain HTML and CSS so it paints as soon as this file
-         parses — the React loader cannot appear until ~120KB of JS has
-         landed, which is several seconds on a slow connection. Removed by
-         the React loader once it takes over. */
+      /* The loading globe. Plain HTML and CSS so it paints as soon as this
+         file parses — React cannot show anything until ~120KB of JS has
+         landed, which is seconds on a slow connection.
+
+         It is the only loading globe: React does not draw a second one, it
+         just sets --p on this element as assets arrive and removes it when
+         they are all in. Every dot is faintly visible from the start, so the
+         sphere reads as present before any progress is known, and brightens
+         as the page fills in rather than appearing from nothing. */
       html, body { margin: 0; background: #000; }
       #boot {
         --d: min(62vw, 54vh);
+        --n: 60;
         position: fixed; inset: 0; z-index: 9999;
         display: grid; place-items: center;
         background: #000; perspective: 900px;
@@ -40,59 +46,80 @@
       #boot .s { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: boot-spin 20s linear infinite; }
       #boot i {
         position: absolute; top: 50%; left: 50%;
-        width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
-        border-radius: 50%; background: #00e6ff; opacity: 0;
+        width: calc(var(--s) * 6px); height: calc(var(--s) * 6px);
+        margin: calc(var(--s) * -3px) 0 0 calc(var(--s) * -3px);
+        border-radius: 50%; background: #00e6ff;
         transform: rotateY(var(--a)) rotateX(var(--b)) translateZ(calc(var(--d) * .34));
-        /* staggered so the sphere builds rather than snapping in whole */
-        animation: boot-dot .45s linear forwards;
-        animation-delay: calc(var(--i) * 55ms);
+        /* dim until this dot's share of the page has arrived, then full */
+        opacity: calc(.14 + clamp(0, calc(var(--p, 0) * var(--n) - var(--i)), 1) * .6);
+        transition: opacity .25s linear;
       }
       @keyframes boot-spin { to { transform: rotateY(360deg); } }
-      @keyframes boot-dot { to { opacity: .72; } }
-      @media (prefers-reduced-motion: reduce) {
-        #boot .s { animation: none; }
-        #boot i { animation-duration: .01s; animation-delay: 0s; }
-      }
+      @media (prefers-reduced-motion: reduce) { #boot .s { animation: none; } }
     </style>
   </head>
   <body>
     <div id="boot" aria-hidden="true"><div class="t"><div class="s">
-      <i style="--a:90.0deg;--b:-76.5deg;--i:0"></i>
-      <i style="--a:-47.5deg;--b:-66.4deg;--i:1"></i>
-      <i style="--a:175.0deg;--b:-59.4deg;--i:2"></i>
-      <i style="--a:37.5deg;--b:-53.7deg;--i:3"></i>
-      <i style="--a:-100.0deg;--b:-48.6deg;--i:4"></i>
-      <i style="--a:122.5deg;--b:-44.0deg;--i:5"></i>
-      <i style="--a:-15.0deg;--b:-39.7deg;--i:6"></i>
-      <i style="--a:-152.6deg;--b:-35.7deg;--i:7"></i>
-      <i style="--a:69.9deg;--b:-31.9deg;--i:8"></i>
-      <i style="--a:-67.6deg;--b:-28.2deg;--i:9"></i>
-      <i style="--a:154.9deg;--b:-24.6deg;--i:10"></i>
-      <i style="--a:17.4deg;--b:-21.2deg;--i:11"></i>
-      <i style="--a:-120.1deg;--b:-17.8deg;--i:12"></i>
-      <i style="--a:102.4deg;--b:-14.5deg;--i:13"></i>
-      <i style="--a:-35.1deg;--b:-11.2deg;--i:14"></i>
-      <i style="--a:-172.6deg;--b:-8.0deg;--i:15"></i>
-      <i style="--a:49.9deg;--b:-4.8deg;--i:16"></i>
-      <i style="--a:-87.6deg;--b:-1.6deg;--i:17"></i>
-      <i style="--a:134.9deg;--b:1.6deg;--i:18"></i>
-      <i style="--a:-2.6deg;--b:4.8deg;--i:19"></i>
-      <i style="--a:-140.2deg;--b:8.0deg;--i:20"></i>
-      <i style="--a:82.3deg;--b:11.2deg;--i:21"></i>
-      <i style="--a:-55.2deg;--b:14.5deg;--i:22"></i>
-      <i style="--a:167.3deg;--b:17.8deg;--i:23"></i>
-      <i style="--a:29.8deg;--b:21.2deg;--i:24"></i>
-      <i style="--a:-107.7deg;--b:24.6deg;--i:25"></i>
-      <i style="--a:114.8deg;--b:28.2deg;--i:26"></i>
-      <i style="--a:-22.7deg;--b:31.9deg;--i:27"></i>
-      <i style="--a:-160.2deg;--b:35.7deg;--i:28"></i>
-      <i style="--a:62.3deg;--b:39.7deg;--i:29"></i>
-      <i style="--a:-75.2deg;--b:44.0deg;--i:30"></i>
-      <i style="--a:147.3deg;--b:48.6deg;--i:31"></i>
-      <i style="--a:9.8deg;--b:53.7deg;--i:32"></i>
-      <i style="--a:-127.8deg;--b:59.4deg;--i:33"></i>
-      <i style="--a:94.7deg;--b:66.4deg;--i:34"></i>
-      <i style="--a:-42.8deg;--b:76.5deg;--i:35"></i>
+      <i style="--a:90.0deg;--b:-79.5deg;--i:0;--s:1.04"></i>
+      <i style="--a:-47.5deg;--b:-71.8deg;--i:1;--s:0.78"></i>
+      <i style="--a:175.0deg;--b:-66.4deg;--i:2;--s:1.53"></i>
+      <i style="--a:37.5deg;--b:-62.0deg;--i:3;--s:0.66"></i>
+      <i style="--a:-100.0deg;--b:-58.2deg;--i:4;--s:1.35"></i>
+      <i style="--a:122.5deg;--b:-54.8deg;--i:5;--s:1.1"></i>
+      <i style="--a:-15.0deg;--b:-51.6deg;--i:6;--s:0.64"></i>
+      <i style="--a:-152.6deg;--b:-48.6deg;--i:7;--s:1.31"></i>
+      <i style="--a:69.9deg;--b:-45.8deg;--i:8;--s:0.61"></i>
+      <i style="--a:-67.6deg;--b:-43.1deg;--i:9;--s:1.2"></i>
+      <i style="--a:154.9deg;--b:-40.5deg;--i:10;--s:0.65"></i>
+      <i style="--a:17.4deg;--b:-38.1deg;--i:11;--s:0.69"></i>
+      <i style="--a:-120.1deg;--b:-35.7deg;--i:12;--s:1.19"></i>
+      <i style="--a:102.4deg;--b:-33.4deg;--i:13;--s:1.79"></i>
+      <i style="--a:-35.1deg;--b:-31.1deg;--i:14;--s:0.74"></i>
+      <i style="--a:-172.6deg;--b:-28.9deg;--i:15;--s:0.88"></i>
+      <i style="--a:49.9deg;--b:-26.7deg;--i:16;--s:1.49"></i>
+      <i style="--a:-87.6deg;--b:-24.6deg;--i:17;--s:1.97"></i>
+      <i style="--a:134.9deg;--b:-22.5deg;--i:18;--s:1.42"></i>
+      <i style="--a:-2.6deg;--b:-20.5deg;--i:19;--s:1.15"></i>
+      <i style="--a:-140.2deg;--b:-18.5deg;--i:20;--s:2.01"></i>
+      <i style="--a:82.3deg;--b:-16.5deg;--i:21;--s:0.62"></i>
+      <i style="--a:-55.2deg;--b:-14.5deg;--i:22;--s:1.84"></i>
+      <i style="--a:167.3deg;--b:-12.5deg;--i:23;--s:0.98"></i>
+      <i style="--a:29.8deg;--b:-10.6deg;--i:24;--s:0.77"></i>
+      <i style="--a:-107.7deg;--b:-8.6deg;--i:25;--s:0.73"></i>
+      <i style="--a:114.8deg;--b:-6.7deg;--i:26;--s:1.01"></i>
+      <i style="--a:-22.7deg;--b:-4.8deg;--i:27;--s:1.77"></i>
+      <i style="--a:-160.2deg;--b:-2.9deg;--i:28;--s:0.82"></i>
+      <i style="--a:62.3deg;--b:-1.0deg;--i:29;--s:1.42"></i>
+      <i style="--a:-75.2deg;--b:1.0deg;--i:30;--s:1.51"></i>
+      <i style="--a:147.3deg;--b:2.9deg;--i:31;--s:1.11"></i>
+      <i style="--a:9.8deg;--b:4.8deg;--i:32;--s:1.37"></i>
+      <i style="--a:-127.8deg;--b:6.7deg;--i:33;--s:0.64"></i>
+      <i style="--a:94.7deg;--b:8.6deg;--i:34;--s:0.64"></i>
+      <i style="--a:-42.8deg;--b:10.6deg;--i:35;--s:0.86"></i>
+      <i style="--a:179.7deg;--b:12.5deg;--i:36;--s:1.57"></i>
+      <i style="--a:42.2deg;--b:14.5deg;--i:37;--s:1.19"></i>
+      <i style="--a:-95.3deg;--b:16.5deg;--i:38;--s:1.02"></i>
+      <i style="--a:127.2deg;--b:18.5deg;--i:39;--s:1.43"></i>
+      <i style="--a:-10.3deg;--b:20.5deg;--i:40;--s:1.23"></i>
+      <i style="--a:-147.8deg;--b:22.5deg;--i:41;--s:1.0"></i>
+      <i style="--a:74.7deg;--b:24.6deg;--i:42;--s:1.74"></i>
+      <i style="--a:-62.8deg;--b:26.7deg;--i:43;--s:1.6"></i>
+      <i style="--a:159.7deg;--b:28.9deg;--i:44;--s:0.92"></i>
+      <i style="--a:22.2deg;--b:31.1deg;--i:45;--s:1.41"></i>
+      <i style="--a:-115.4deg;--b:33.4deg;--i:46;--s:1.34"></i>
+      <i style="--a:107.1deg;--b:35.7deg;--i:47;--s:1.86"></i>
+      <i style="--a:-30.4deg;--b:38.1deg;--i:48;--s:1.64"></i>
+      <i style="--a:-167.9deg;--b:40.5deg;--i:49;--s:0.98"></i>
+      <i style="--a:54.6deg;--b:43.1deg;--i:50;--s:2.02"></i>
+      <i style="--a:-82.9deg;--b:45.8deg;--i:51;--s:0.73"></i>
+      <i style="--a:139.6deg;--b:48.6deg;--i:52;--s:1.18"></i>
+      <i style="--a:2.1deg;--b:51.6deg;--i:53;--s:1.69"></i>
+      <i style="--a:-135.4deg;--b:54.8deg;--i:54;--s:0.78"></i>
+      <i style="--a:87.1deg;--b:58.2deg;--i:55;--s:1.28"></i>
+      <i style="--a:-50.4deg;--b:62.0deg;--i:56;--s:0.61"></i>
+      <i style="--a:172.1deg;--b:66.4deg;--i:57;--s:1.55"></i>
+      <i style="--a:34.5deg;--b:71.8deg;--i:58;--s:1.7"></i>
+      <i style="--a:-103.0deg;--b:79.5deg;--i:59;--s:1.41"></i>
     </div></div></div>
     <div id="root"></div>
     <script type="module" src="/src/entries/v2.tsx"></script>

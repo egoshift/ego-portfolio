@@ -9,6 +9,12 @@ export default defineConfig({
     include: "**/*.svg?react"
   })],
   base: '/ego-portfolio/',
+  // GitHub Pages serves these with max-age=600. Vite's preview server
+  // otherwise sends no-cache, which makes every CSS mask re-request its image
+  // and looks like assets loading late when throttled.
+  preview: {
+    headers: { 'Cache-Control': 'max-age=600' },
+  },
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {

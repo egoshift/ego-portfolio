@@ -4,7 +4,6 @@ import AsciiField from './AsciiField';
 import Hero from './Hero';
 import About from './About';
 import Interests from './Interests';
-import Loader from './Loader';
 import { useLoadProgress } from './use-load-progress';
 import { markFade, markGlitch } from './motion';
 
@@ -15,6 +14,22 @@ export default function AppV2() {
   const reduceMotion = useReducedMotion();
   const progress = useLoadProgress();
   const ready = progress >= 1;
+
+  // There is one loading globe and it lives in index.html, so it can paint
+  // before any of this has downloaded. React only feeds it progress and takes
+  // it away — drawing a second one here is what made two appear in a row.
+  useEffect(() => {
+    document.getElementById('boot')?.style.setProperty('--p', String(progress));
+  }, [progress]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const boot = document.getElementById('boot');
+    if (!boot) return;
+    boot.classList.add('out');
+    const timer = window.setTimeout(() => boot.remove(), 400);
+    return () => window.clearTimeout(timer);
+  }, [ready]);
 
   const handleTrigger = useCallback((name: string) => {
     if (name === 'about') setView('about');
@@ -56,7 +71,6 @@ export default function AppV2() {
       </AnimatePresence>
       {/* wait, so the outgoing group finishes scattering before the next spreads in */}
       <AnimatePresence mode="wait">
-        {!ready && <Loader key="loader" progress={progress} />}
         {ready && view === 'hero' && <Hero key="hero" onTrigger={handleTrigger} />}
         {ready && view === 'about' && <About key="about" />}
         {ready && view === 'interests' && <Interests key="interests" />}
