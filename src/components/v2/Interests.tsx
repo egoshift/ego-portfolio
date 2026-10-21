@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
 import { WordGlobe } from './word-globe';
+import { asset } from '../../utils/asset';
 import {
   INTEREST_GROUPS,
   INTEREST_WORDS,
@@ -43,6 +44,22 @@ function fillerCount(words: number): number {
  * the dots into the other. Merging the two streams in proportion scatters
  * them through each other instead.
  */
+/**
+ * Shuffles the words before they are laid out.
+ *
+ * The sphere walks pole to pole by index, so any property that runs in blocks
+ * through the data lands as a band on the globe — the logo-bearing entries sit
+ * together in the file, and without this they all cluster in one hemisphere.
+ */
+function shuffled(words: InterestWord[]): InterestWord[] {
+  const out = [...words];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 function interleaveFillers(words: InterestWord[], fillers: number): Slot[] {
   const slots: Slot[] = [];
   let wordIndex = 0;
@@ -82,7 +99,7 @@ export default function Interests() {
   );
 
   const slots = useMemo(
-    () => interleaveFillers(visible, fillerCount(visible.length)),
+    () => interleaveFillers(shuffled(visible), fillerCount(visible.length)),
     [visible]
   );
 
@@ -171,25 +188,38 @@ export default function Interests() {
               taps outside it still reach the ripple field. */}
           <span className="globe__grab" aria-hidden="true" />
           {slots.map((slot, i) =>
-            slot.kind === 'word' ? (
-              <span
-                className="globe__word glitch"
-                data-globe-word
-                data-group={slot.word.group}
-                key={slot.word.label}
-              >
-                {slot.word.label}
-              </span>
-            ) : (
+            slot.kind !== 'word' ? (
               <span
                 className="globe__dot"
-                data-globe-word
+                data-globe-point
                 data-globe-filler
                 data-filler-alpha={slot.alpha}
                 style={{ '--dot-scale': slot.scale } as CSSProperties}
                 aria-hidden="true"
                 key={`filler-${i}`}
               />
+            ) : slot.word.image ? (
+              <span
+                className="globe__image"
+                data-globe-point
+                data-globe-image
+                data-group={slot.word.group}
+                role="img"
+                aria-label={slot.word.label}
+                style={
+                  { '--logo': `url(${asset(slot.word.image)})` } as CSSProperties
+                }
+                key={slot.word.label}
+              />
+            ) : (
+              <span
+                className="globe__word glitch"
+                data-globe-point
+                data-group={slot.word.group}
+                key={slot.word.label}
+              >
+                {slot.word.label}
+              </span>
             )
           )}
         </div>

@@ -565,3 +565,40 @@ body {
   pointer-events: none;
   will-change: transform, opacity;
 }
+
+/* Logo points. The sphere positions these exactly as it does the words — the
+   only difference is that a split has to come from drop-shadow, since
+   text-shadow does nothing to an image. */
+.globe__image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  width: clamp(20px, 2.6vw, 38px);
+  aspect-ratio: 1;
+
+  /* The logo is used as a mask rather than drawn, so it comes through in the
+     page's cyan instead of its own brand colours — every one of these PNGs
+     has an alpha channel, so the shape survives. Swap the mask for
+     `background-image` with no mask to get full colour back. */
+  background-color: #00e6ff;
+  mask-image: var(--logo);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: var(--logo);
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform, opacity;
+  transition: filter 0.18s ease;
+}
+
+.globe__image:hover {
+  filter:
+    drop-shadow(2px 0 #ff0040)
+    drop-shadow(-2px 0 #00e6ff);
+}

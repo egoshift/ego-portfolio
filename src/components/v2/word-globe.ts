@@ -77,12 +77,15 @@ function fibonacciSphere(count: number): Point[] {
 
 export class WordGlobe {
   private readonly container: HTMLElement;
+  /** Every point on the sphere: words, filler dots and logos alike. */
   private words: HTMLElement[] = [];
   private points: Point[] = [];
   /** Per-element opacity multiplier. 1 for words; filler dots carry their own
    *  random value, read once here rather than parsed out of the DOM each
    *  frame. */
   private alphaScale: number[] = [];
+  /** Images take the colour split as a drop-shadow; text takes a text-shadow. */
+  private isImage: boolean[] = [];
   /** Wall-clock time the glitch burst ends. */
   private glitchUntil = 0;
   /** Whether the last frame left a glitch style on the words to clear. */
@@ -150,12 +153,15 @@ export class WordGlobe {
 
   /** Re-reads the points and their per-element opacity from the DOM. */
   private collect(): void {
-    this.words = [...this.container.querySelectorAll<HTMLElement>('[data-globe-word]')];
+    this.words = [...this.container.querySelectorAll<HTMLElement>('[data-globe-point]')];
     this.points = fibonacciSphere(this.words.length);
     this.alphaScale = this.words.map((element) => {
       const alpha = Number(element.dataset.fillerAlpha);
       return Number.isFinite(alpha) && alpha > 0 ? alpha : 1;
     });
+    this.isImage = this.words.map(
+      (element) => element.dataset.globeImage !== undefined
+    );
   }
 
   /** Tear the words up briefly — used when the filter changes. */
@@ -294,10 +300,20 @@ export class WordGlobe {
         // but identical for every word within a step.
         const noise = ((i * 2654435761 + step * 40503) % 1024) / 1024;
         const offset = (1.5 + noise * 3.5) * (((i + step) & 1) === 0 ? 1 : -1);
-        word.style.textShadow = `${offset.toFixed(1)}px 0 #ff0040, ${(-offset).toFixed(1)}px 0 #00e6ff`;
+        // text-shadow does nothing to an image, so logos split with stacked
+        // drop-shadows instead — same look, different property.
+        if (this.isImage[i]) {
+          word.style.filter =
+            `drop-shadow(${offset.toFixed(1)}px 0 #ff0040) ` +
+            `drop-shadow(${(-offset).toFixed(1)}px 0 #00e6ff)`;
+        } else {
+          word.style.textShadow =
+            `${offset.toFixed(1)}px 0 #ff0040, ${(-offset).toFixed(1)}px 0 #00e6ff`;
+        }
         opacity *= 0.55 + noise * 0.45;
       } else if (this.glitchPainted) {
         word.style.textShadow = '';
+        word.style.filter = '';
       }
 
       word.style.opacity = opacity.toFixed(3);
