@@ -25,6 +25,14 @@ const TARGET_POINTS = 46;
  * dots and still reads as a full sphere.
  */
 const SPARSE_BONUS = 46;
+/**
+ * Dots never fall below this share of the points on the sphere.
+ *
+ * Topping up to a constant alone silently zeroed them once logos started
+ * claiming a second point each and the counts reached the target from above —
+ * the texture is wanted on a busy sphere too, not only a sparse one.
+ */
+const MIN_FILLER_SHARE = 0.28;
 
 /** One place on the sphere. An entry with a logo claims two of them. */
 type Point = { kind: 'word' | 'image'; word: InterestWord };
@@ -47,10 +55,11 @@ function toPoints(words: InterestWord[]): Point[] {
   return points;
 }
 
-function fillerCount(words: number): number {
-  const topUp = Math.max(0, TARGET_POINTS - words);
-  const emptiness = 1 - Math.min(1, words / TARGET_POINTS);
-  return topUp + Math.round(SPARSE_BONUS * emptiness * emptiness);
+function fillerCount(points: number): number {
+  const topUp = Math.max(0, TARGET_POINTS - points);
+  const emptiness = 1 - Math.min(1, points / TARGET_POINTS);
+  const sparse = topUp + Math.round(SPARSE_BONUS * emptiness * emptiness);
+  return Math.max(Math.round(points * MIN_FILLER_SHARE), sparse);
 }
 
 /**
