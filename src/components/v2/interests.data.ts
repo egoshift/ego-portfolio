@@ -1,23 +1,22 @@
 /**
  * Keywords pulled from Ems's CV, each tagged with a group.
  *
- * The group is carried so it can drive something later — colour per group on
- * the globe, filtering, or a legend. Nothing reads it yet beyond `data-group`
- * on each word.
+ * The three groups are the ones the filter pills show. `skills` deliberately
+ * covers the whole technical stack — languages, databases, frameworks, AI,
+ * build and test tooling — because on a word cloud those splits are not ones
+ * anyone reads.
  *
- * `tooling` deliberately covers the whole technical stack rather than
- * splitting languages from frameworks from databases: on a word cloud that
- * distinction is not one anyone reads, and it left most groups too small to
- * colour meaningfully.
+ * `outside` has nothing in it yet: the only non-technical words so far are
+ * hobbies. Its pill is disabled until there is something to put there.
  */
 
-export type InterestGroup = 'tooling' | 'testing' | 'interest';
+export type InterestGroup = 'skills' | 'hobbies' | 'outside';
 
-/** Display names, for a legend or filter UI. */
+/** Display names, used on the filter pills. */
 export const INTEREST_GROUPS: Record<InterestGroup, string> = {
-  tooling: 'Skills / Tools',
-  testing: 'Testing',
-  interest: 'Hobbies / Interests',
+  skills: 'Skills / Tools',
+  hobbies: 'Hobbies / Interests',
+  outside: 'Outside Work',
 };
 
 export interface InterestWord {
@@ -27,53 +26,51 @@ export interface InterestWord {
 
 export const INTEREST_WORDS: InterestWord[] = [
   // Languages
-  { label: 'TypeScript', group: 'tooling' },
-  { label: 'JavaScript', group: 'tooling' },
-  { label: 'Python', group: 'tooling' },
-  { label: 'PHP', group: 'tooling' },
-  { label: 'SQL', group: 'tooling' },
-  { label: 'C#', group: 'tooling' },
-  { label: 'HTML', group: 'tooling' },
-  { label: 'CSS', group: 'tooling' },
+  { label: 'TypeScript', group: 'skills' },
+  { label: 'JavaScript', group: 'skills' },
+  { label: 'Python', group: 'skills' },
+  { label: 'PHP', group: 'skills' },
+  { label: 'SQL', group: 'skills' },
+  { label: 'C#', group: 'skills' },
+  { label: 'HTML', group: 'skills' },
+  { label: 'CSS', group: 'skills' },
 
   // Databases
-  { label: 'PostgreSQL', group: 'tooling' },
-  { label: 'MySQL', group: 'tooling' },
-  { label: 'MongoDB', group: 'tooling' },
+  { label: 'PostgreSQL', group: 'skills' },
+  { label: 'MySQL', group: 'skills' },
+  { label: 'MongoDB', group: 'skills' },
 
   // Frameworks & libraries
-  { label: 'React', group: 'tooling' },
-  { label: 'React Native', group: 'tooling' },
-  { label: 'Next.js', group: 'tooling' },
-  { label: 'Node.js', group: 'tooling' },
-  { label: 'NestJS', group: 'tooling' },
-  { label: 'Express', group: 'tooling' },
-  { label: 'Laravel', group: 'tooling' },
-  { label: 'Flask', group: 'tooling' },
-  { label: 'TailwindCSS', group: 'tooling' },
-  { label: 'MaterialUI', group: 'tooling' },
+  { label: 'React', group: 'skills' },
+  { label: 'React Native', group: 'skills' },
+  { label: 'Next.js', group: 'skills' },
+  { label: 'Node.js', group: 'skills' },
+  { label: 'NestJS', group: 'skills' },
+  { label: 'Express', group: 'skills' },
+  { label: 'Laravel', group: 'skills' },
+  { label: 'Flask', group: 'skills' },
+  { label: 'TailwindCSS', group: 'skills' },
+  { label: 'MaterialUI', group: 'skills' },
 
   // AI
-  { label: 'LLMs', group: 'tooling' },
-  { label: 'AI Agents', group: 'tooling' },
-  { label: 'Guardrails', group: 'tooling' },
-  { label: 'Agentic Coding', group: 'tooling' },
+  { label: 'LLMs', group: 'skills' },
+  { label: 'AI Agents', group: 'skills' },
+  { label: 'Guardrails', group: 'skills' },
+  { label: 'Agentic Coding', group: 'skills' },
 
-  // Build & infrastructure
-  { label: 'NX', group: 'tooling' },
-  { label: 'Vite', group: 'tooling' },
-  { label: 'Webpack', group: 'tooling' },
-  { label: 'ESLint', group: 'tooling' },
-  { label: 'Docker', group: 'tooling' },
-  { label: 'GCP', group: 'tooling' },
-  { label: 'CI/CD', group: 'tooling' },
+  // Build, test & infrastructure
+  { label: 'NX', group: 'skills' },
+  { label: 'Vite', group: 'skills' },
+  { label: 'Webpack', group: 'skills' },
+  { label: 'ESLint', group: 'skills' },
+  { label: 'Jest', group: 'skills' },
+  { label: 'Playwright', group: 'skills' },
+  { label: 'Docker', group: 'skills' },
+  { label: 'GCP', group: 'skills' },
+  { label: 'CI/CD', group: 'skills' },
 
-  // Testing — its own group so it does not vanish into the stack
-  { label: 'Jest', group: 'testing' },
-  { label: 'Playwright', group: 'testing' },
-
-  // Outside work — from v1's About window, and Peaksy corroborates the hiking
-  { label: 'Hiking', group: 'interest' },
-  { label: 'Photography', group: 'interest' },
-  { label: 'Art', group: 'interest' },
+  // Hobbies — from v1's About window, and Peaksy corroborates the hiking
+  { label: 'Hiking', group: 'hobbies' },
+  { label: 'Photography', group: 'hobbies' },
+  { label: 'Art', group: 'hobbies' },
 ];

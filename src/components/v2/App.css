@@ -474,6 +474,16 @@ body {
   color: #000;
 }
 
+.filters__button:disabled {
+  border-color: #2b3a40;
+  color: #4a5a61;
+  cursor: default;
+}
+
+.filters__button:disabled:hover {
+  background: none;
+}
+
 .filters__button:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;

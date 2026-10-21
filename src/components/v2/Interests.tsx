@@ -26,6 +26,12 @@ export default function Interests() {
     [filter]
   );
 
+  const counts = useMemo(() => {
+    const tally = {} as Record<InterestGroup, number>;
+    for (const { group } of INTEREST_WORDS) tally[group] = (tally[group] ?? 0) + 1;
+    return tally;
+  }, []);
+
   useEffect(() => {
     const element = sphereRef.current;
     if (!element) return;
@@ -71,19 +77,25 @@ export default function Interests() {
         custom={{ x: -1 }}
       >
         <ul className="filters">
-          {GROUP_ORDER.map((group) => (
-            <li key={group}>
-              <button
-                type="button"
-                className="filters__button"
-                data-active={filter === group || undefined}
-                aria-pressed={filter === group}
-                onClick={() => handleFilter(group)}
-              >
-                {INTEREST_GROUPS[group]}
-              </button>
-            </li>
-          ))}
+          {GROUP_ORDER.map((group) => {
+            // Nothing to filter to yet, so the pill says so rather than
+            // emptying the globe.
+            const empty = !counts[group];
+            return (
+              <li key={group}>
+                <button
+                  type="button"
+                  className="filters__button"
+                  data-active={filter === group || undefined}
+                  aria-pressed={filter === group}
+                  disabled={empty}
+                  onClick={() => handleFilter(group)}
+                >
+                  {INTEREST_GROUPS[group]}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </motion.div>
 
