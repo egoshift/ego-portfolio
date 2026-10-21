@@ -26,9 +26,26 @@ const TARGET_POINTS = 46;
  */
 const SPARSE_BONUS = 46;
 
-type Slot =
-  | { kind: 'word'; word: InterestWord }
-  | { kind: 'filler'; scale: number; alpha: number };
+/** One place on the sphere. An entry with a logo claims two of them. */
+type Point = { kind: 'word' | 'image'; word: InterestWord };
+
+type Slot = Point | { kind: 'filler'; scale: number; alpha: number };
+
+/**
+ * Expands the entries into points.
+ *
+ * A word with a logo appears twice — once as the mark, once as the name — so
+ * the mark never costs you the label, and the globe reads fuller for it. The
+ * two are shuffled apart, so they land on opposite sides rather than together.
+ */
+function toPoints(words: InterestWord[]): Point[] {
+  const points: Point[] = [];
+  for (const word of words) {
+    points.push({ kind: 'word', word });
+    if (word.image) points.push({ kind: 'image', word });
+  }
+  return points;
+}
 
 function fillerCount(words: number): number {
   const topUp = Math.max(0, TARGET_POINTS - words);
@@ -50,9 +67,10 @@ function fillerCount(words: number): number {
  * The sphere walks pole to pole by index, so any property that runs in blocks
  * through the data lands as a band on the globe — the logo-bearing entries sit
  * together in the file, and without this they all cluster in one hemisphere.
+ * It also splits each logo from its own label.
  */
-function shuffled(words: InterestWord[]): InterestWord[] {
-  const out = [...words];
+function shuffled(points: Point[]): Point[] {
+  const out = [...points];
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [out[i], out[j]] = [out[j], out[i]];
@@ -60,16 +78,16 @@ function shuffled(words: InterestWord[]): InterestWord[] {
   return out;
 }
 
-function interleaveFillers(words: InterestWord[], fillers: number): Slot[] {
+function interleaveFillers(points: Point[], fillers: number): Slot[] {
   const slots: Slot[] = [];
-  let wordIndex = 0;
+  let pointIndex = 0;
   let fillerIndex = 0;
 
-  for (let i = 0; i < words.length + fillers; i++) {
-    const wordShare = words.length ? wordIndex / words.length : 1;
+  for (let i = 0; i < points.length + fillers; i++) {
+    const pointShare = points.length ? pointIndex / points.length : 1;
     const fillerShare = fillers ? fillerIndex / fillers : 1;
-    if (wordIndex < words.length && (fillerIndex >= fillers || wordShare <= fillerShare)) {
-      slots.push({ kind: 'word', word: words[wordIndex++] });
+    if (pointIndex < points.length && (fillerIndex >= fillers || pointShare <= fillerShare)) {
+      slots.push(points[pointIndex++]);
     } else {
       // Rolled per slot rather than per frame, so a dot keeps its size and
       // level until the filter changes.
@@ -98,10 +116,10 @@ export default function Interests() {
     [filter]
   );
 
-  const slots = useMemo(
-    () => interleaveFillers(shuffled(visible), fillerCount(visible.length)),
-    [visible]
-  );
+  const slots = useMemo(() => {
+    const points = shuffled(toPoints(visible));
+    return interleaveFillers(points, fillerCount(points.length));
+  }, [visible]);
 
   const counts = useMemo(() => {
     const tally = {} as Record<InterestGroup, number>;
@@ -188,7 +206,7 @@ export default function Interests() {
               taps outside it still reach the ripple field. */}
           <span className="globe__grab" aria-hidden="true" />
           {slots.map((slot, i) =>
-            slot.kind !== 'word' ? (
+            slot.kind === 'filler' ? (
               <span
                 className="globe__dot"
                 data-globe-point
@@ -198,7 +216,7 @@ export default function Interests() {
                 aria-hidden="true"
                 key={`filler-${i}`}
               />
-            ) : slot.word.image ? (
+            ) : slot.kind === 'image' ? (
               <span
                 className="globe__image"
                 data-globe-point
@@ -207,16 +225,16 @@ export default function Interests() {
                 role="img"
                 aria-label={slot.word.label}
                 style={
-                  { '--logo': `url(${asset(slot.word.image)})` } as CSSProperties
+                  { '--logo': `url(${asset(slot.word.image ?? '')})` } as CSSProperties
                 }
-                key={slot.word.label}
+                key={`image-${slot.word.label}`}
               />
             ) : (
               <span
                 className="globe__word glitch"
                 data-globe-point
                 data-group={slot.word.group}
-                key={slot.word.label}
+                key={`word-${slot.word.label}`}
               >
                 {slot.word.label}
               </span>
