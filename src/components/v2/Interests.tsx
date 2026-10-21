@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
 import { WordGlobe } from './word-globe';
-import { asset } from '../../utils/asset';
+import { logoUrl } from './logo-store';
 import {
   INTEREST_GROUPS,
   INTEREST_WORDS,
@@ -234,7 +234,7 @@ export default function Interests() {
                 role="img"
                 aria-label={slot.word.label}
                 style={
-                  { '--logo': `url(${asset(slot.word.image ?? '')})` } as CSSProperties
+                  { '--logo': `url(${logoUrl(slot.word.image ?? '')})` } as CSSProperties
                 }
                 key={`image-${slot.word.label}`}
               />

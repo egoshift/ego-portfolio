@@ -5,16 +5,31 @@ import svgr from 'vite-plugin-svgr';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), svgr({
-    include: "**/*.svg?react"
-  })],
+  plugins: [
+    react(),
+    tailwindcss(),
+    svgr({ include: '**/*.svg?react' }),
+    {
+      // Pages serves assets with max-age=600 while preview sends no-cache, so
+      // a throttled run here looks worse than the real thing. Match Pages for
+      // assets only — caching the HTML as well would pin the browser to a
+      // stale bundle and quietly serve old code after a rebuild.
+      name: 'pages-like-cache-headers',
+      configurePreviewServer(server) {
+        server.middlewares.use((req: { url?: string }, res, next) => {
+          const path = (req.url ?? '').split('?')[0];
+          const cacheable = /\.(png|jpe?g|svg|gif|webp|woff2?|js|css|json)$/.test(path);
+          res.setHeader('Cache-Control', cacheable ? 'max-age=600' : 'no-cache');
+          next();
+        });
+      },
+    },
+  ],
   base: '/ego-portfolio/',
-  // GitHub Pages serves these with max-age=600. Vite's preview server
-  // otherwise sends no-cache, which makes every CSS mask re-request its image
-  // and looks like assets loading late when throttled.
-  preview: {
-    headers: { 'Cache-Control': 'max-age=600' },
-  },
+  // Pages serves assets with max-age=600 while preview sends no-cache, which
+  // makes a throttled run here look worse than the real thing. This matches
+  // Pages for assets only — caching the HTML too would pin the browser to a
+  // stale bundle for ten minutes, which is murder on the edit/reload loop.
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {

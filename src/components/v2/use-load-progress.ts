@@ -1,22 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { asset } from '../../utils/asset';
+import { loadContributions } from './contributions';
 import { INTEREST_WORDS } from './interests.data';
+import { captureLogo } from './logo-store';
 
 /** Re-render only on a visible step, rather than every frame for two seconds. */
 const STEP = 0.01;
 
-function waitForImage(src: string): Promise<void> {
-  return new Promise((resolve) => {
-    const image = new Image();
-    // decode() waits for the pixels to be ready to paint, not just for the
-    // bytes to arrive — otherwise a logo can still pop in on first render.
-    // Resolve either way: a missing logo should not hold the whole page.
-    const done = () => resolve();
-    image.onload = () => (image.decode ? image.decode().then(done, done) : done());
-    image.onerror = done;
-    image.src = src;
-  });
-}
 
 /**
  * How far the page is from being ready, 0 to 1.
@@ -34,9 +23,10 @@ export function useLoadProgress(): number {
 
     const tasks: Promise<unknown>[] = [
       document.fonts ? document.fonts.ready : Promise.resolve(),
-      fetch(asset('github-contributions.json')).catch(() => null),
+      loadContributions(),
+      // Captured as blobs, so the globe's masks have nothing left to fetch.
       ...INTEREST_WORDS.filter((word) => word.image).map((word) =>
-        waitForImage(asset(word.image as string))
+        captureLogo(word.image as string)
       ),
     ];
     const total = tasks.length;

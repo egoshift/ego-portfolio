@@ -33,11 +33,13 @@ export default function ContributionCalendarGrid() {
   const [calendar, setCalendar] = useState<ContributionCalendar | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    loadContributions(controller.signal).then((data) => {
-      if (!controller.signal.aborted) setCalendar(data);
+    let live = true;
+    loadContributions().then((data) => {
+      if (live) setCalendar(data);
     });
-    return () => controller.abort();
+    return () => {
+      live = false;
+    };
   }, []);
 
   // The calendar is decoration — if the build step never ran, show nothing

@@ -31,24 +31,28 @@ function isCalendar(value: unknown): value is ContributionCalendar {
   );
 }
 
+let inFlight: Promise<ContributionCalendar | null> | null = null;
+
 /**
  * Reads the calendar that `npm run contributions` wrote into `public/`.
  *
+ * Memoised: the loader asks for it so it can wait, and the panel asks for it
+ * so it can draw. Without this the second caller fetched it all over again,
+ * which showed up as a real request firing well after loading had finished.
+ *
  * Returns null rather than throwing when the file is missing or malformed —
  * the calendar is decoration, and the page should not break because a build
- * step was skipped or the fetch went stale.
+ * step was skipped.
  */
-export async function loadContributions(
-  signal?: AbortSignal
-): Promise<ContributionCalendar | null> {
-  try {
-    const response = await fetch(asset('github-contributions.json'), { signal });
-    if (!response.ok) return null;
-    const data: unknown = await response.json();
-    return isCalendar(data) ? data : null;
-  } catch {
-    return null;
-  }
+export function loadContributions(): Promise<ContributionCalendar | null> {
+  inFlight ??= fetch(asset('github-contributions.json'))
+    .then(async (response) => {
+      if (!response.ok) return null;
+      const data: unknown = await response.json();
+      return isCalendar(data) ? data : null;
+    })
+    .catch(() => null);
+  return inFlight;
 }
 
 /** Flattens the grid back into a single ordered run of days. */
