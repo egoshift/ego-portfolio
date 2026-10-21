@@ -971,19 +971,27 @@ body {
    would otherwise read as solid blocks beside the cut-out ones, and Next.js
    and NX are black, so on anything dark they vanished entirely. */
 .work__tech {
-  --logo: clamp(22px, min(2.3vw, 3.6vh), 34px);
+  /* 26px floor rather than 22: overlapped and ringed, anything smaller left
+     only a sliver of each logo showing on a phone. */
+  --logo: clamp(26px, min(2.3vw, 3.6vh), 34px);
 
   display: flex;
   flex: 0 1 auto;
-  flex-wrap: wrap;
-  /* Right-aligned, so a wrapped row still ends level with the line below. */
+  /* One run, overlapping — it is a stack, not a list, so it does not wrap. */
+  flex-wrap: nowrap;
   justify-content: flex-end;
-  gap: clamp(0.3rem, 0.9vh, 0.5rem);
+  gap: 0;
 
   margin: 0;
   padding: 0;
 
   list-style: none;
+}
+
+/* Each tile laps the one before it, the way v1 stacked a project's logos.
+   Later ones paint on top, which is the order they are listed in. */
+.work__tech li + li {
+  margin-left: calc(var(--logo) * -0.26);
 }
 
 .work__tech img {
@@ -995,5 +1003,8 @@ body {
 
   border-radius: calc(var(--logo) * 0.24);
   background: rgb(255 255 255 / 0.88);
+  /* A ring in the page's own black, so the overlap reads as separate tiles
+     rather than one run-on shape. */
+  box-shadow: 0 0 0 2px #000;
   object-fit: contain;
 }
