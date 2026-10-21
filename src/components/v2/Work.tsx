@@ -27,9 +27,23 @@ export default function Work() {
         variants={spreadItem}
         custom={{ y: -1 }}
       >
-        <div key={active.id} className="work__swap">
-          <h2 className="work__role">{active.role}</h2>
-          <p className="work__company">{active.company}</p>
+        <div key={active.id} className="work__swap work__headline">
+          <div className="work__who">
+            <h2 className="work__role">{active.role}</h2>
+            <p className="work__company">{active.company}</p>
+          </div>
+
+          {/* What the job was built with, opposite the title. No heading —
+              the logos say what they are. */}
+          <ul className="work__tech">
+            {techFor(active).map((tech) => (
+              <li key={tech.name}>
+                {/* logoUrl hands back the copy loading already pulled in,
+                    so opening the panel fetches nothing. */}
+                <img src={logoUrl(tech.image)} alt={tech.name} title={tech.name} />
+              </li>
+            ))}
+          </ul>
         </div>
       </motion.header>
 
@@ -99,17 +113,6 @@ export default function Work() {
             <ul className="work__duties">
               {active.responsibilities.map((duty) => (
                 <li key={duty}>{duty}</li>
-              ))}
-            </ul>
-
-            <h3 className="work__label work__label--tech">Tech stack</h3>
-            <ul className="work__tech">
-              {techFor(active).map((tech) => (
-                <li key={tech.name}>
-                  {/* logoUrl hands back the copy loading already pulled in,
-                      so opening the panel fetches nothing. */}
-                  <img src={logoUrl(tech.image)} alt={tech.name} title={tech.name} />
-                </li>
               ))}
             </ul>
           </section>
