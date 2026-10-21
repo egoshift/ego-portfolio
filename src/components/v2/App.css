@@ -874,37 +874,61 @@ body {
 }
 
 
-/* Stacked on narrow screens, side by side once there is room for two. */
-.work__columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1rem, 3vh, 2rem);
+/* The two headings became tabs, so only one list is on screen at a time. */
+.work__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.3rem, 1vw, 0.7rem);
 
-  text-align: left;
+  margin-bottom: clamp(0.9rem, 2.6vh, 1.7rem);
 }
 
-/* Not an even split: the projects carry names and numbers and need the room,
-   the duties are context and can sit narrower. */
-@media (min-width: 900px) {
-  .work__columns {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    gap: clamp(1.5rem, 4vw, 4.5rem);
+/* Quiet until you touch it: no border at rest, the glitch split on hover
+   (that comes from .glitch), and the outlined pill once it is the one
+   showing. The border is there at rest in transparent, so turning it on
+   cannot shift the row. */
+.work__tab {
+  appearance: none;
+  padding: clamp(0.4em, 1.1vh, 0.62em) clamp(0.9em, 1.6vw, 1.5em);
+
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: none;
+
+  font: inherit;
+  font-size: clamp(0.66rem, min(1vw, 1.7vh), 1rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #00e6ff;
+
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 0.18s ease;
+}
+
+.work__tab[data-active] {
+  border-color: #00e6ff;
+}
+
+.work__tab:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work__tab {
+    transition: none;
   }
 }
 
-/* The timeline is the loud thing on this panel, so the columns under it stay
-   quiet: no rules, no caps, no bullets. What separates them is rhythm — the
-   duties run on, the projects sit apart as named blocks. */
-.work__label {
-  margin: 0 0 clamp(0.6rem, 1.8vh, 1.15rem);
-
-  font-size: clamp(0.66rem, min(1vw, 1.7vh), 1rem);
-  line-height: 1.2;
-  color: #00e6ff;
-}
-
+/* One list now has the whole width, which would run the lines far too long,
+   so it breaks into as many columns as fit at a readable measure. */
 .work__duties,
 .work__projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: clamp(0.5rem, 1.6vh, 1.1rem) clamp(1.5rem, 4vw, 4rem);
+
   margin: 0;
   padding: 0;
 
@@ -914,29 +938,17 @@ body {
 
 /* Continuous: close leading inside an item, air between them, no markers. */
 .work__duties {
-  display: grid;
-  gap: clamp(0.5rem, 1.5vh, 1rem);
-
   font-size: clamp(0.6rem, min(0.9vw, 1.5vh), 0.92rem);
   line-height: 1.55;
   color: #aeb9bf;
 }
 
-.work__duties li {
-  max-width: 56ch;
-}
-
 /* Discrete: each one is a name and what it was. */
-.work__projects {
-  display: grid;
-  gap: clamp(0.5rem, 1.6vh, 1.05rem);
-}
-
 .work__projects li {
   display: grid;
   gap: 0.25em;
 
-  max-width: 64ch;
+  align-content: start;
 }
 
 .work__project-title {

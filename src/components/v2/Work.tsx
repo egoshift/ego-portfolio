@@ -6,9 +6,17 @@ import { logoUrl } from './logo-store';
 
 const YEARS = timelineYears();
 
+type TabId = 'duties' | 'projects';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'duties', label: 'Roles and responsibilities' },
+  { id: 'projects', label: 'Notable projects' },
+];
+
 export default function Work() {
   // Newest job first, which is the one worth landing on.
   const [activeId, setActiveId] = useState(WORK[0].id);
+  const [tab, setTab] = useState<TabId>('duties');
   const active = WORK.find((role) => role.id === activeId) ?? WORK[0];
   const span = roleSpan(active);
 
@@ -107,18 +115,31 @@ export default function Work() {
         variants={spreadItem}
         custom={{ y: -0.3 }}
       >
-        <div key={active.id} className="work__swap work__columns">
-          <section className="work__column work__column--duties">
-            <h3 className="work__label">Roles and responsibilities</h3>
+        <div className="work__tabs" role="tablist">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              className="work__tab glitch"
+              data-active={id === tab ? '' : undefined}
+              aria-selected={id === tab}
+              onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Keyed on both, so switching job or tab replays the fade. */}
+        <div key={`${active.id}-${tab}`} className="work__swap" role="tabpanel">
+          {tab === 'duties' ? (
             <ul className="work__duties">
               {active.responsibilities.map((duty) => (
                 <li key={duty}>{duty}</li>
               ))}
             </ul>
-          </section>
-
-          <section className="work__column work__column--projects">
-            <h3 className="work__label">Notable projects</h3>
+          ) : (
             <ul className="work__projects">
               {active.projects.map((project) => (
                 <li key={project.title}>
@@ -127,7 +148,7 @@ export default function Work() {
                 </li>
               ))}
             </ul>
-          </section>
+          )}
         </div>
       </motion.div>
     </motion.div>
