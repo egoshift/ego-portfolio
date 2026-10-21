@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import AsciiField from './AsciiField';
 import Hero from './Hero';
 import About from './About';
 import Interests from './Interests';
+import { markFade, markGlitch } from './motion';
 
 type View = 'hero' | 'about' | 'interests';
 
 export default function AppV2() {
   const [view, setView] = useState<View>('hero');
+  const reduceMotion = useReducedMotion();
 
   const handleTrigger = useCallback((name: string) => {
     if (name === 'about') setView('about');
@@ -29,17 +31,25 @@ export default function AppV2() {
     <main className="viewport">
       <AsciiField />
       {/* The mark, and the way home. Only on the panels — on the hero it
-          would be pointing at the page you are already on. */}
-      {view !== 'hero' && (
-        <button
-          type="button"
-          className="home glitch"
-          aria-label="Home"
-          onClick={() => setView('hero')}
-        >
-          E
-        </button>
-      )}
+          would be pointing at the page you are already on. Its own
+          AnimatePresence, so it can tear out instead of just vanishing. */}
+      <AnimatePresence>
+        {view !== 'hero' && (
+          <motion.button
+            key="home"
+            type="button"
+            className="home glitch"
+            aria-label="Home"
+            onClick={() => setView('hero')}
+            variants={reduceMotion ? markFade : markGlitch}
+            initial="initial"
+            animate="enter"
+            exit="exit"
+          >
+            E
+          </motion.button>
+        )}
+      </AnimatePresence>
       {/* wait, so the outgoing group finishes scattering before the next spreads in */}
       <AnimatePresence mode="wait">
         {view === 'hero' && <Hero key="hero" onTrigger={handleTrigger} />}

@@ -380,6 +380,13 @@ body {
   letter-spacing: -0.03em;
   color: #00e6ff;
 
+  /* --split is animated as a plain number by markGlitch; the two offset
+     copies are built from it here. At 0 they sit exactly behind the glyph
+     and are invisible, which is the resting state. */
+  filter:
+    drop-shadow(calc(var(--split, 0) * 1px) 0 #ff0040)
+    drop-shadow(calc(var(--split, 0) * -1px) 0 #00e6ff);
+
   cursor: pointer;
   pointer-events: auto;
   user-select: none;

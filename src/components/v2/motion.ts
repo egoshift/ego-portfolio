@@ -68,3 +68,45 @@ export const spreadItem: Variants = {
     transition: EASE_AWAY,
   }),
 };
+
+/**
+ * The home mark tearing in and out.
+ *
+ * The split rides a plain number, `--split`, which App.css turns into the two
+ * offset drop-shadows. Animating the filter string directly does not work:
+ * framer-motion cannot interpolate between two multi-function filters, so it
+ * snapped from one to the other and the tear never showed. A number it can
+ * interpolate frame by frame.
+ *
+ * It is a filter rather than a text-shadow because framer-motion writes what
+ * it animates inline, and an inline text-shadow would outrank `.glitch:hover`
+ * and kill the hover split once the mark had settled.
+ */
+export const markGlitch: Variants = {
+  initial: { opacity: 0, x: -10, '--split': 7 },
+  enter: {
+    // Stepped rather than eased, so it reads as a signal locking on instead
+    // of a smooth fade.
+    opacity: [0, 1, 0.35, 1, 0.7, 1],
+    x: [-10, 5, -3, 2, 0, 0],
+    '--split': [7, -5, 3, -2, 1, 0],
+    transition: {
+      duration: 0.44,
+      times: [0, 0.18, 0.36, 0.56, 0.78, 1],
+      ease: 'linear',
+    },
+  },
+  exit: {
+    opacity: [1, 0.5, 1, 0.2, 0],
+    x: [0, 3, -5, 7, -12],
+    '--split': [0, 4, -6, 9, 12],
+    transition: { duration: 0.3, times: [0, 0.25, 0.5, 0.75, 1], ease: 'linear' },
+  },
+};
+
+/** Same entrance and exit without the tearing, for prefers-reduced-motion. */
+export const markFade: Variants = {
+  initial: { opacity: 0 },
+  enter: { opacity: 1, transition: { duration: 0.2 } },
+  exit: { opacity: 0, transition: { duration: 0.15 } },
+};
