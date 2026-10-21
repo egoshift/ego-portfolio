@@ -927,11 +927,13 @@ body {
    Columns rather than a grid: only some projects carry a shot, and in a grid
    every row was as tall as its tallest item, which left gaps under the ones
    that are text only. Columns just flow. */
-.work__duties,
 .work__projects {
   columns: 24rem 2;
   column-gap: clamp(1.5rem, 4vw, 4rem);
+}
 
+.work__duties,
+.work__projects {
   margin: 0;
   padding: 0;
 
@@ -971,11 +973,15 @@ body {
   }
 }
 
-/* Continuous: close leading inside an item, air between them, no markers. */
+/* Continuous: close leading inside an item, air between them, no markers.
+   One column, and capped: across the panel's full width a line of this would
+   run past 120 characters. */
 .work__duties {
-  font-size: clamp(0.6rem, min(0.9vw, 1.5vh), 0.92rem);
-  line-height: 1.55;
-  color: #aeb9bf;
+  max-width: min(100%, 72ch);
+
+  font-size: clamp(0.68rem, min(1.08vw, 1.8vh), 1.1rem);
+  line-height: 1.5;
+  color: #00e6ff;
 }
 
 /* Each project is a card: a shot of the site, or the lock that says why
