@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
 import { WordGlobe } from './word-globe';
@@ -13,11 +14,26 @@ const GROUP_ORDER = Object.keys(INTEREST_GROUPS) as InterestGroup[];
 /** Matches the engine's burst, so the buttons settle as the words do. */
 const GLITCH_MS = 460;
 /**
- * Points on the sphere, words and filler dots together. Holding this constant
- * keeps the globe the same density whatever the filter — a group of eight
- * would otherwise leave it looking half built.
+ * Points on the sphere, words and filler dots together. Topping up to a
+ * constant keeps the globe from looking half built when a filter is on.
  */
 const TARGET_POINTS = 46;
+/**
+ * Extra dots on top of that as a group empties out, on a squared curve — the
+ * crowded views barely notice, while a small group gets close to twice the
+ * dots and still reads as a full sphere.
+ */
+const SPARSE_BONUS = 46;
+
+type Slot =
+  | { kind: 'word'; word: InterestWord }
+  | { kind: 'filler'; scale: number; alpha: number };
+
+function fillerCount(words: number): number {
+  const topUp = Math.max(0, TARGET_POINTS - words);
+  const emptiness = 1 - Math.min(1, words / TARGET_POINTS);
+  return topUp + Math.round(SPARSE_BONUS * emptiness * emptiness);
+}
 
 /**
  * Spreads the fillers evenly through the words.
@@ -27,23 +43,24 @@ const TARGET_POINTS = 46;
  * the dots into the other. Merging the two streams in proportion scatters
  * them through each other instead.
  */
-function interleaveFillers(
-  words: InterestWord[],
-  fillers: number
-): (InterestWord | null)[] {
-  if (fillers <= 0) return words;
-
-  const slots: (InterestWord | null)[] = [];
+function interleaveFillers(words: InterestWord[], fillers: number): Slot[] {
+  const slots: Slot[] = [];
   let wordIndex = 0;
   let fillerIndex = 0;
 
   for (let i = 0; i < words.length + fillers; i++) {
     const wordShare = words.length ? wordIndex / words.length : 1;
-    const fillerShare = fillerIndex / fillers;
+    const fillerShare = fillers ? fillerIndex / fillers : 1;
     if (wordIndex < words.length && (fillerIndex >= fillers || wordShare <= fillerShare)) {
-      slots.push(words[wordIndex++]);
+      slots.push({ kind: 'word', word: words[wordIndex++] });
     } else {
-      slots.push(null);
+      // Rolled per slot rather than per frame, so a dot keeps its size and
+      // level until the filter changes.
+      slots.push({
+        kind: 'filler',
+        scale: 0.45 + Math.random() * 1.25,
+        alpha: 0.22 + Math.random() * 0.78,
+      });
       fillerIndex++;
     }
   }
@@ -65,7 +82,7 @@ export default function Interests() {
   );
 
   const slots = useMemo(
-    () => interleaveFillers(visible, TARGET_POINTS - visible.length),
+    () => interleaveFillers(visible, fillerCount(visible.length)),
     [visible]
   );
 
@@ -153,21 +170,23 @@ export default function Interests() {
           {/* Circular grab area, so a drag works anywhere on the sphere while
               taps outside it still reach the ripple field. */}
           <span className="globe__grab" aria-hidden="true" />
-          {slots.map((word, i) =>
-            word ? (
+          {slots.map((slot, i) =>
+            slot.kind === 'word' ? (
               <span
                 className="globe__word glitch"
                 data-globe-word
-                data-group={word.group}
-                key={word.label}
+                data-group={slot.word.group}
+                key={slot.word.label}
               >
-                {word.label}
+                {slot.word.label}
               </span>
             ) : (
               <span
                 className="globe__dot"
                 data-globe-word
                 data-globe-filler
+                data-filler-alpha={slot.alpha}
+                style={{ '--dot-scale': slot.scale } as CSSProperties}
                 aria-hidden="true"
                 key={`filler-${i}`}
               />

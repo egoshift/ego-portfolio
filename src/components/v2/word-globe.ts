@@ -42,9 +42,6 @@ const THROW_SMOOTHING = 0.35;
 const MAX_THROW = 2.6;
 /** The far side never fades past this, so the globe stays legible through. */
 const MIN_OPACITY = 0.16;
-/** Filler dots ride at this share of a word's opacity, so they read as
- *  texture holding the sphere's shape rather than as content. */
-const FILLER_OPACITY = 0.72;
 /** How long a filter change tears the words up for. */
 const GLITCH_MS = 460;
 /** New jitter this often, rather than every frame, so it reads as digital
@@ -82,6 +79,10 @@ export class WordGlobe {
   private readonly container: HTMLElement;
   private words: HTMLElement[] = [];
   private points: Point[] = [];
+  /** Per-element opacity multiplier. 1 for words; filler dots carry their own
+   *  random value, read once here rather than parsed out of the DOM each
+   *  frame. */
+  private alphaScale: number[] = [];
   /** Wall-clock time the glitch burst ends. */
   private glitchUntil = 0;
   /** Whether the last frame left a glitch style on the words to clear. */
@@ -114,8 +115,7 @@ export class WordGlobe {
   }
 
   mount(): void {
-    this.words = [...this.container.querySelectorAll<HTMLElement>('[data-globe-word]')];
-    this.points = fibonacciSphere(this.words.length);
+    this.collect();
 
     this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     this.reduceMotion = this.motionQuery.matches;
@@ -143,10 +143,19 @@ export class WordGlobe {
    * leaving holes where the hidden words used to sit.
    */
   refresh(): void {
-    this.words = [...this.container.querySelectorAll<HTMLElement>('[data-globe-word]')];
-    this.points = fibonacciSphere(this.words.length);
+    this.collect();
     this.render();
     if (!this.reduceMotion) this.start();
+  }
+
+  /** Re-reads the points and their per-element opacity from the DOM. */
+  private collect(): void {
+    this.words = [...this.container.querySelectorAll<HTMLElement>('[data-globe-word]')];
+    this.points = fibonacciSphere(this.words.length);
+    this.alphaScale = this.words.map((element) => {
+      const alpha = Number(element.dataset.fillerAlpha);
+      return Number.isFinite(alpha) && alpha > 0 ? alpha : 1;
+    });
   }
 
   /** Tear the words up briefly — used when the filter changes. */
@@ -276,8 +285,9 @@ export class WordGlobe {
         `${(y * radius * perspective).toFixed(1)}px, 0) ` +
         `translate(-50%, -50%) scale(${perspective.toFixed(3)})`;
       const filler = word.dataset.globeFiller !== undefined;
-      let opacity = MIN_OPACITY + (1 - MIN_OPACITY) * depth;
-      if (filler) opacity *= FILLER_OPACITY;
+      // Depth still reads through, but each dot carries its own level on top
+      // so they do not all sit at the same brightness for a given distance.
+      let opacity = (MIN_OPACITY + (1 - MIN_OPACITY) * depth) * this.alphaScale[i];
 
       if (glitching) {
         // Cheap deterministic hash per word per beat, so the jitter is varied

@@ -553,8 +553,9 @@ body {
   top: 50%;
   left: 50%;
 
-  width: clamp(4px, 0.62vw, 9px);
-  height: clamp(4px, 0.62vw, 9px);
+  /* --dot-scale is rolled per dot in Interests, so the sizes vary. */
+  width: calc(clamp(4px, 0.62vw, 9px) * var(--dot-scale, 1));
+  height: calc(clamp(4px, 0.62vw, 9px) * var(--dot-scale, 1));
 
   border-radius: 50%;
   background: #00e6ff;
