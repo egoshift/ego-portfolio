@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
-import { WORK, timelineYears } from './work.data';
+import { WORK, roleSpan, timelineYears } from './work.data';
 
 const YEARS = timelineYears();
 
@@ -9,6 +9,7 @@ export default function Work() {
   // Newest job first, which is the one worth landing on.
   const [activeId, setActiveId] = useState(WORK[0].id);
   const active = WORK.find((role) => role.id === activeId) ?? WORK[0];
+  const span = roleSpan(active);
 
   return (
     <motion.div
@@ -38,7 +39,8 @@ export default function Work() {
       >
         {/* Every circle is a year, from the first job to this one. A year a
             job ended in is drawn big and is the only kind you can click; the
-            rest are just the years going by. */}
+            rest are just the years going by. Only the selected job's own
+            years are labelled, so the labels read as its span. */}
         <div className="timeline">
           <span className="timeline__line" aria-hidden="true" />
           {YEARS.map(({ year, at, roleId }) => {
@@ -69,9 +71,16 @@ export default function Work() {
                     aria-hidden="true"
                   />
                 )}
-                <span className="timeline__year" style={{ left }}>
-                  {year}
-                </span>
+                {year >= span.from && year <= span.to && (
+                  <span
+                    className={
+                      role ? 'timeline__year timeline__year--job' : 'timeline__year'
+                    }
+                    style={{ left }}
+                  >
+                    {year}
+                  </span>
+                )}
               </Fragment>
             );
           })}

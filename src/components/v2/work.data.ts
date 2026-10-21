@@ -138,6 +138,19 @@ function endYear(role: WorkRole, now: number): number {
 }
 
 /**
+ * The years a job covers, inclusive.
+ *
+ * Only these get a label on the line, so the labels read as the span of
+ * whichever job is selected rather than a ruler under the whole thing.
+ */
+export function roleSpan(role: WorkRole): { from: number; to: number } {
+  return {
+    from: yearOf(role.start),
+    to: endYear(role, new Date().getFullYear()),
+  };
+}
+
+/**
  * The circles, one per year from the first job to now.
  *
  * A year a job ended in carries that job, and the panel draws those bigger
