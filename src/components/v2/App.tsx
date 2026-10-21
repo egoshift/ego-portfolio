@@ -5,7 +5,7 @@ import Hero from './Hero';
 import About from './About';
 import Interests from './Interests';
 import Loader from './Loader';
-import { useAssetsReady } from './use-assets-ready';
+import { useLoadProgress } from './use-load-progress';
 import { markFade, markGlitch } from './motion';
 
 type View = 'hero' | 'about' | 'interests';
@@ -13,7 +13,8 @@ type View = 'hero' | 'about' | 'interests';
 export default function AppV2() {
   const [view, setView] = useState<View>('hero');
   const reduceMotion = useReducedMotion();
-  const ready = useAssetsReady();
+  const progress = useLoadProgress();
+  const ready = progress >= 1;
 
   const handleTrigger = useCallback((name: string) => {
     if (name === 'about') setView('about');
@@ -55,7 +56,7 @@ export default function AppV2() {
       </AnimatePresence>
       {/* wait, so the outgoing group finishes scattering before the next spreads in */}
       <AnimatePresence mode="wait">
-        {!ready && <Loader key="loader" />}
+        {!ready && <Loader key="loader" progress={progress} />}
         {ready && view === 'hero' && <Hero key="hero" onTrigger={handleTrigger} />}
         {ready && view === 'about' && <About key="about" />}
         {ready && view === 'interests' && <Interests key="interests" />}

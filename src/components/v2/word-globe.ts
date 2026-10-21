@@ -160,7 +160,8 @@ export class WordGlobe {
     this.points = fibonacciSphere(this.words.length);
     this.alphaScale = this.words.map((element) => {
       const alpha = Number(element.dataset.fillerAlpha);
-      return Number.isFinite(alpha) && alpha > 0 ? alpha : 1;
+      // >= 0, so a dot can be held at zero while it waits to arrive.
+      return Number.isFinite(alpha) && alpha >= 0 ? alpha : 1;
     });
     this.isImage = this.words.map(
       (element) => element.dataset.globeImage !== undefined
