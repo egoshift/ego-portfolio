@@ -644,28 +644,34 @@ body {
   z-index: 1;
 
   display: grid;
-  /* Hung from the top rather than centred: the two jobs have different
-     amounts to say, and centring made the line jump up and down as you
-     switched between them. The body takes whatever height is left, so it can
-     bound its own scroll instead of running off the bottom of the page. */
-  grid-template-rows: auto minmax(0, 1fr);
+  /* Title, then the line, then the reading. Hung from the top rather than
+     centred: the two jobs have different amounts to say, and centring made
+     the line jump up and down as you switched between them. The body takes
+     whatever height is left, so it can bound its own scroll instead of
+     running off the bottom of the page. */
+  grid-template-rows: auto auto minmax(0, 1fr);
   justify-items: center;
-  gap: clamp(1.1rem, 4vh, 3rem);
+  gap: clamp(0.9rem, 3.4vh, 2.4rem);
 
-  padding: max(var(--mark-space), 14vh) clamp(20px, 5vw, 80px)
+  padding: max(var(--mark-space), 9vh) clamp(20px, 5vw, 80px)
     clamp(14px, 3vh, 34px);
 
   font-family: Helvetica, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 700;
   color: #fff;
-  text-align: center;
+  /* Everything hangs off the left end of the line. */
+  text-align: left;
 
   pointer-events: none;
 }
 
+/* 88vw rather than 92: the circles at each end of the line are centred on it
+   and hang half their width past it, and on a phone that was putting the last
+   one and its year hard against the edge. */
+.work__heading,
 .work__track,
 .work__body {
-  width: min(76rem, 92vw);
+  width: min(76rem, 88vw);
 }
 
 .work__body {
@@ -706,7 +712,21 @@ body {
   --node: clamp(15px, min(2vw, 3vh), 26px);
 
   position: relative;
-  height: calc(var(--node) * 1.6);
+  /* Tall enough for the biggest circle; the year labels hang below it, so
+     the margin is what reserves their room. */
+  height: calc(var(--node) * 1.8);
+  margin-bottom: clamp(1.2rem, 3vh, 2rem);
+}
+
+/* The year each circle stands for, under it. */
+.timeline__year {
+  position: absolute;
+  top: calc(50% + var(--node) * 1.15);
+
+  font-size: clamp(0.5rem, min(1.05vw, 1.7vh), 1.05rem);
+  line-height: 1;
+  color: #fff;
+  transform: translateX(-50%);
 }
 
 .timeline__line {
@@ -823,8 +843,10 @@ body {
   }
 }
 
+/* Above the line now, and sharing its left edge. The years under the circles
+   say when the job ran, so there is no date line here to repeat them. */
 .work__heading {
-  margin-bottom: clamp(0.9rem, 3.4vh, 2.4rem);
+  margin: 0;
 }
 
 .work__role {
@@ -843,14 +865,6 @@ body {
   line-height: 1.2;
 }
 
-.work__period {
-  margin: 0.35em 0 0;
-
-  font-size: clamp(0.6rem, min(0.95vw, 1.6vh), 0.92rem);
-  line-height: 1.2;
-  letter-spacing: 0.04em;
-  color: #6f7f86;
-}
 
 /* Stacked on narrow screens, side by side once there is room for two. */
 .work__columns {
