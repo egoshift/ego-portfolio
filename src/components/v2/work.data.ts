@@ -1,3 +1,5 @@
+import previews from './previews.json';
+
 /**
  * The experience behind the "Developer" trigger.
  *
@@ -10,7 +12,19 @@
 export interface WorkProject {
   title: string;
   detail: string;
+  /**
+   * Key into previews.json, for a project with a public site.
+   *
+   * Most of these do not have one: they are internal enterprise systems
+   * behind a login, and v1 marked them NDA. Those stay text only rather
+   * than carrying a picture of something else.
+   */
+  site?: keyof typeof PREVIEWS;
 }
+
+/** Where each preview came from, and where its shot lives in public/. */
+export const PREVIEWS: Record<string, { url: string; file: string }> =
+  previews;
 
 export interface WorkRole {
   id: string;
@@ -61,6 +75,7 @@ export const WORK: WorkRole[] = [
     projects: [
       {
         title: 'HireAI',
+        site: 'hireai',
         detail:
           'Custom LLM-powered AI employees. Led engineering and product; 11 businesses onboarded, 17+ agents deployed.',
       },
@@ -86,11 +101,13 @@ export const WORK: WorkRole[] = [
       },
       {
         title: 'Lesson Planner PH',
+        site: 'lesson-planner',
         detail:
           'AI-powered lesson planning — the interface, and the LLM document generation pipeline behind it.',
       },
       {
         title: 'Peaksy',
+        site: 'peaksy',
         detail:
           'A React Native hiking app I lead front to back. Grew organically to 300+ users and 100+ bookings.',
       },
@@ -189,8 +206,11 @@ export function techFor(role: WorkRole): Tech[] {
  * requests — the same reason the globe's logos are captured up front.
  */
 export const WORK_IMAGES: string[] = [
-  ...new Set(WORK.flatMap((role) => role.tech)),
-].flatMap((key) => TECH[key]?.image ?? []);
+  ...[...new Set(WORK.flatMap((role) => role.tech))].flatMap(
+    (key) => TECH[key]?.image ?? []
+  ),
+  ...Object.values(PREVIEWS).map((preview) => preview.file),
+];
 
 /** One circle on the line. Every circle is a year. */
 export interface TimelineYear {

@@ -922,18 +922,28 @@ body {
 }
 
 /* One list now has the whole width, which would run the lines far too long,
-   so it breaks into as many columns as fit at a readable measure. */
+   so it breaks into as many columns as fit at a readable measure.
+
+   Columns rather than a grid: only some projects carry a shot, and in a grid
+   every row was as tall as its tallest item, which left gaps under the ones
+   that are text only. Columns just flow. */
 .work__duties,
 .work__projects {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
-  gap: clamp(0.5rem, 1.6vh, 1.1rem) clamp(1.5rem, 4vw, 4rem);
+  columns: 24rem 2;
+  column-gap: clamp(1.5rem, 4vw, 4rem);
 
   margin: 0;
   padding: 0;
 
   font-weight: 400;
   list-style: none;
+}
+
+.work__duties li,
+.work__projects li {
+  margin-bottom: clamp(0.5rem, 1.6vh, 1.1rem);
+  /* Keeps an item from being split across the column break. */
+  break-inside: avoid;
 }
 
 /* Continuous: close leading inside an item, air between them, no markers. */
@@ -943,12 +953,61 @@ body {
   color: #aeb9bf;
 }
 
-/* Discrete: each one is a name and what it was. */
+/* Discrete: each one is a name and what it was, with a shot of the site
+   alongside where there is a public one to show. */
 .work__projects li {
+  display: flex;
+  align-items: start;
+  gap: clamp(0.5rem, 1vw, 0.9rem);
+}
+
+.work__project-text {
   display: grid;
   gap: 0.25em;
+}
 
-  align-content: start;
+/* Small and beside the text rather than above it: at the column's full width
+   a shot would be taller than the three lines it belongs to, and the list
+   would be mostly pictures. */
+.work__project-shot {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(88px, 9vw, 132px);
+
+  border: 1px solid rgb(0 230 255 / 0.3);
+  border-radius: 3px;
+  overflow: hidden;
+
+  pointer-events: auto;
+  transition: border-color 0.18s ease;
+}
+
+.work__project-shot:hover,
+.work__project-shot:focus-visible {
+  border-color: #00e6ff;
+}
+
+.work__project-shot:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.work__project-shot img {
+  display: block;
+
+  width: 100%;
+  /* The shots are captured at this ratio; stated so the row does not jump
+     while they decode. */
+  aspect-ratio: 550 / 344;
+
+  object-fit: cover;
+  object-position: top left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work__project-shot {
+    transition: none;
+  }
 }
 
 .work__project-title {

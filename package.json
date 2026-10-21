@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "contributions": "node scripts/fetch-contributions.mjs"
+    "contributions": "node scripts/fetch-contributions.mjs",
+    "previews": "node scripts/capture-previews.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

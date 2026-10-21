@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
-import { WORK, roleSpan, techFor, timelineYears } from './work.data';
+import { PREVIEWS, WORK, roleSpan, techFor, timelineYears } from './work.data';
 import { logoUrl } from './logo-store';
 
 const YEARS = timelineYears();
@@ -141,12 +141,29 @@ export default function Work() {
             </ul>
           ) : (
             <ul className="work__projects">
-              {active.projects.map((project) => (
-                <li key={project.title}>
-                  <span className="work__project-title">{project.title}</span>
-                  <span className="work__project-detail">{project.detail}</span>
-                </li>
-              ))}
+              {active.projects.map((project) => {
+                const preview = project.site ? PREVIEWS[project.site] : undefined;
+
+                return (
+                  <li key={project.title}>
+                    {preview && (
+                      <a
+                        className="work__project-shot"
+                        href={preview.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${project.title} — open the site`}
+                      >
+                        <img src={logoUrl(preview.file)} alt="" />
+                      </a>
+                    )}
+                    <span className="work__project-text">
+                      <span className="work__project-title">{project.title}</span>
+                      <span className="work__project-detail">{project.detail}</span>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

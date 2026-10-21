@@ -1,0 +1,14 @@
+{
+  "hireai": {
+    "url": "https://hireai.bot",
+    "file": "previews/hireai.jpg"
+  },
+  "peaksy": {
+    "url": "https://peaksy.app",
+    "file": "previews/peaksy.jpg"
+  },
+  "lesson-planner": {
+    "url": "https://www.lessonplanner.org/v2",
+    "file": "previews/lesson-planner.jpg"
+  }
+}
