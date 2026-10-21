@@ -10,9 +10,12 @@ const STEP = 0.01;
 function waitForImage(src: string): Promise<void> {
   return new Promise((resolve) => {
     const image = new Image();
+    // decode() waits for the pixels to be ready to paint, not just for the
+    // bytes to arrive — otherwise a logo can still pop in on first render.
     // Resolve either way: a missing logo should not hold the whole page.
-    image.onload = () => resolve();
-    image.onerror = () => resolve();
+    const done = () => resolve();
+    image.onload = () => (image.decode ? image.decode().then(done, done) : done());
+    image.onerror = done;
     image.src = src;
   });
 }
@@ -33,7 +36,6 @@ export function useLoadProgress(): number {
   useEffect(() => {
     let frame = 0;
     let landed = 0;
-    const started = performance.now();
 
     const tasks: Promise<unknown>[] = [
       document.fonts ? document.fonts.ready : Promise.resolve(),
@@ -55,7 +57,10 @@ export function useLoadProgress(): number {
     }
 
     const tick = () => {
-      const byTime = Math.min(1, (performance.now() - started) / MINIMUM_MS);
+      // performance.now() counts from navigation, not from this effect, so a
+      // late React start does not restart the floor the boot sphere already
+      // spent its time on.
+      const byTime = Math.min(1, performance.now() / MINIMUM_MS);
       const byAssets = total ? landed / total : 1;
       const next = Math.min(byTime, byAssets);
 

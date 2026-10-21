@@ -5,8 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Ems Oriel</title>
+    <!-- The globe draws these as CSS masks, which is a separate resource
+         reference from anything JS preloads, so start them here with the
+         markup. Kept in step with interests.data.ts by hand; a logo missing
+         from this list still works, it just arrives later. -->
+    <link rel="preload" as="fetch" href="/github-contributions.json" crossorigin />
+    <link rel="preload" as="image" href="/tech/php.png" />
+    <link rel="preload" as="image" href="/tech/html.png" />
+    <link rel="preload" as="image" href="/tech/css.png" />
+    <link rel="preload" as="image" href="/tech/postgresql.png" />
+    <link rel="preload" as="image" href="/tech/mysql.png" />
+    <link rel="preload" as="image" href="/tech/react.png" />
+    <link rel="preload" as="image" href="/tech/nextjs.png" />
+    <link rel="preload" as="image" href="/tech/nestjs.png" />
+    <link rel="preload" as="image" href="/tech/laravel.png" />
+    <link rel="preload" as="image" href="/tech/tailwindcss.png" />
+    <link rel="preload" as="image" href="/tech/mui.png" />
+    <link rel="preload" as="image" href="/tech/nx.png" />
+    <style>
+      /* Boot sphere. Plain HTML and CSS so it paints as soon as this file
+         parses — the React loader cannot appear until ~120KB of JS has
+         landed, which is several seconds on a slow connection. Removed by
+         the React loader once it takes over. */
+      html, body { margin: 0; background: #000; }
+      #boot {
+        --d: min(62vw, 54vh);
+        position: fixed; inset: 0; z-index: 9999;
+        display: grid; place-items: center;
+        background: #000; perspective: 900px;
+        transition: opacity .35s ease;
+      }
+      #boot.out { opacity: 0; }
+      #boot .t { width: var(--d); height: var(--d); transform: rotateX(-16deg); transform-style: preserve-3d; }
+      #boot .s { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: boot-spin 20s linear infinite; }
+      #boot i {
+        position: absolute; top: 50%; left: 50%;
+        width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+        border-radius: 50%; background: #00e6ff; opacity: 0;
+        transform: rotateY(var(--a)) rotateX(var(--b)) translateZ(calc(var(--d) * .34));
+        /* staggered so the sphere builds rather than snapping in whole */
+        animation: boot-dot .45s linear forwards;
+        animation-delay: calc(var(--i) * 55ms);
+      }
+      @keyframes boot-spin { to { transform: rotateY(360deg); } }
+      @keyframes boot-dot { to { opacity: .72; } }
+      @media (prefers-reduced-motion: reduce) {
+        #boot .s { animation: none; }
+        #boot i { animation-duration: .01s; animation-delay: 0s; }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" aria-hidden="true"><div class="t"><div class="s">
+      <i style="--a:90.0deg;--b:-76.5deg;--i:0"></i>
+      <i style="--a:-47.5deg;--b:-66.4deg;--i:1"></i>
+      <i style="--a:175.0deg;--b:-59.4deg;--i:2"></i>
+      <i style="--a:37.5deg;--b:-53.7deg;--i:3"></i>
+      <i style="--a:-100.0deg;--b:-48.6deg;--i:4"></i>
+      <i style="--a:122.5deg;--b:-44.0deg;--i:5"></i>
+      <i style="--a:-15.0deg;--b:-39.7deg;--i:6"></i>
+      <i style="--a:-152.6deg;--b:-35.7deg;--i:7"></i>
+      <i style="--a:69.9deg;--b:-31.9deg;--i:8"></i>
+      <i style="--a:-67.6deg;--b:-28.2deg;--i:9"></i>
+      <i style="--a:154.9deg;--b:-24.6deg;--i:10"></i>
+      <i style="--a:17.4deg;--b:-21.2deg;--i:11"></i>
+      <i style="--a:-120.1deg;--b:-17.8deg;--i:12"></i>
+      <i style="--a:102.4deg;--b:-14.5deg;--i:13"></i>
+      <i style="--a:-35.1deg;--b:-11.2deg;--i:14"></i>
+      <i style="--a:-172.6deg;--b:-8.0deg;--i:15"></i>
+      <i style="--a:49.9deg;--b:-4.8deg;--i:16"></i>
+      <i style="--a:-87.6deg;--b:-1.6deg;--i:17"></i>
+      <i style="--a:134.9deg;--b:1.6deg;--i:18"></i>
+      <i style="--a:-2.6deg;--b:4.8deg;--i:19"></i>
+      <i style="--a:-140.2deg;--b:8.0deg;--i:20"></i>
+      <i style="--a:82.3deg;--b:11.2deg;--i:21"></i>
+      <i style="--a:-55.2deg;--b:14.5deg;--i:22"></i>
+      <i style="--a:167.3deg;--b:17.8deg;--i:23"></i>
+      <i style="--a:29.8deg;--b:21.2deg;--i:24"></i>
+      <i style="--a:-107.7deg;--b:24.6deg;--i:25"></i>
+      <i style="--a:114.8deg;--b:28.2deg;--i:26"></i>
+      <i style="--a:-22.7deg;--b:31.9deg;--i:27"></i>
+      <i style="--a:-160.2deg;--b:35.7deg;--i:28"></i>
+      <i style="--a:62.3deg;--b:39.7deg;--i:29"></i>
+      <i style="--a:-75.2deg;--b:44.0deg;--i:30"></i>
+      <i style="--a:147.3deg;--b:48.6deg;--i:31"></i>
+      <i style="--a:9.8deg;--b:53.7deg;--i:32"></i>
+      <i style="--a:-127.8deg;--b:59.4deg;--i:33"></i>
+      <i style="--a:94.7deg;--b:66.4deg;--i:34"></i>
+      <i style="--a:-42.8deg;--b:76.5deg;--i:35"></i>
+    </div></div></div>
     <div id="root"></div>
     <script type="module" src="/src/entries/v2.tsx"></script>
   </body>

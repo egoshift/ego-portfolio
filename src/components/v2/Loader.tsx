@@ -40,6 +40,15 @@ export default function Loader({ progress }: Props) {
 
   const arrived = Math.round(Math.min(1, Math.max(0, progress)) * DOTS);
 
+  // The boot sphere in index.html has been carrying the wait until now.
+  useEffect(() => {
+    const boot = document.getElementById('boot');
+    if (!boot) return;
+    boot.classList.add('out');
+    const timer = window.setTimeout(() => boot.remove(), 400);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const element = sphereRef.current;
     if (!element) return;
