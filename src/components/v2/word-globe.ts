@@ -42,6 +42,9 @@ const THROW_SMOOTHING = 0.35;
 const MAX_THROW = 2.6;
 /** The far side never fades past this, so the globe stays legible through. */
 const MIN_OPACITY = 0.16;
+/** Filler dots ride at this share of a word's opacity, so they read as
+ *  texture holding the sphere's shape rather than as content. */
+const FILLER_OPACITY = 0.72;
 /** How long a filter change tears the words up for. */
 const GLITCH_MS = 460;
 /** New jitter this often, rather than every frame, so it reads as digital
@@ -272,7 +275,9 @@ export class WordGlobe {
         `translate3d(${(x * radius * perspective).toFixed(1)}px, ` +
         `${(y * radius * perspective).toFixed(1)}px, 0) ` +
         `translate(-50%, -50%) scale(${perspective.toFixed(3)})`;
+      const filler = word.dataset.globeFiller !== undefined;
       let opacity = MIN_OPACITY + (1 - MIN_OPACITY) * depth;
+      if (filler) opacity *= FILLER_OPACITY;
 
       if (glitching) {
         // Cheap deterministic hash per word per beat, so the jitter is varied
@@ -290,7 +295,10 @@ export class WordGlobe {
       // Only the near face is hoverable, so you cannot catch a word through
       // the middle of the sphere. While dragging nothing is, or the cursor
       // snags on words as they pass under it.
-      word.style.pointerEvents = z > 0 && !this.dragging ? 'auto' : 'none';
+      // Fillers are decoration and never take the pointer, so they cannot
+      // swallow a click meant for the field behind them.
+      word.style.pointerEvents =
+        !filler && z > 0 && !this.dragging ? 'auto' : 'none';
     }
 
     this.glitchPainted = glitching;

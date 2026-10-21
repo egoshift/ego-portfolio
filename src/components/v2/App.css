@@ -544,3 +544,23 @@ body {
 .globe__sphere[data-dragging='true'] .globe__grab {
   cursor: grabbing;
 }
+
+/* Filler dots. They sit on the sphere alongside the words and are positioned
+   by the same code, so a sparse filter still reads as a sphere rather than a
+   handful of floating words. Decoration only — never interactive. */
+.globe__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  width: clamp(4px, 0.62vw, 9px);
+  height: clamp(4px, 0.62vw, 9px);
+
+  border-radius: 50%;
+  background: #00e6ff;
+
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  will-change: transform, opacity;
+}

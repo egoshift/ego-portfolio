@@ -69,8 +69,16 @@ export const INTEREST_WORDS: InterestWord[] = [
   { label: 'GCP', group: 'skills' },
   { label: 'CI/CD', group: 'skills' },
 
-  // Hobbies — from v1's About window, and Peaksy corroborates the hiking
+  // Hobbies & the areas Ems is drawn to. The first three come from v1's About
+  // window, and Peaksy corroborates the hiking. The rest are the subjects,
+  // rather than the tools — Creative Coding and Game Development are already
+  // called out on the about panel.
   { label: 'Hiking', group: 'hobbies' },
   { label: 'Photography', group: 'hobbies' },
   { label: 'Art', group: 'hobbies' },
+  { label: 'Web', group: 'hobbies' },
+  { label: 'AI', group: 'hobbies' },
+  { label: 'Creative Coding', group: 'hobbies' },
+  { label: 'Game Development', group: 'hobbies' },
+  { label: 'Design', group: 'hobbies' },
 ];
