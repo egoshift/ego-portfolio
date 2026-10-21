@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
-import { WORK, position, yearTicks } from './work.data';
+import { WORK, timelineYears } from './work.data';
 
-const TICKS = yearTicks();
+const YEARS = timelineYears();
 
 export default function Work() {
   // Newest job first, which is the one worth landing on.
@@ -23,35 +23,44 @@ export default function Work() {
         variants={spreadItem}
         custom={{ y: -1 }}
       >
-        {/* The line runs from the first job to today, so the current one keeps
-            growing on its own. The small dots are years going by and are not
-            interactive; a big one is where a job ended, which for the current
-            one is the end of the line. */}
+        {/* Every circle is a year, from the first job to this one. A year a
+            job ended in is drawn big and is the only kind you can click; the
+            rest are just the years going by. */}
         <div className="timeline">
           <span className="timeline__line" aria-hidden="true" />
-          {TICKS.map((tick) => (
-            <span
-              key={tick.year}
-              className="timeline__tick"
-              style={{ left: `${tick.at * 100}%` }}
-              aria-hidden="true"
-            />
-          ))}
-          {WORK.map((role) => (
-            <button
-              key={role.id}
-              type="button"
-              className="timeline__node"
-              style={{ left: `${position(role.end) * 100}%` }}
-              data-active={role.id === active.id ? '' : undefined}
-              aria-pressed={role.id === active.id}
-              onClick={() => setActiveId(role.id)}
-            >
-              <span className="timeline__node-label">
-                {role.role}, {role.company}
-              </span>
-            </button>
-          ))}
+          {YEARS.map(({ year, at, roleId }) => {
+            const role = roleId
+              ? WORK.find((entry) => entry.id === roleId)
+              : undefined;
+            const left = `${at * 100}%`;
+
+            if (!role) {
+              return (
+                <span
+                  key={year}
+                  className="timeline__tick"
+                  style={{ left }}
+                  aria-hidden="true"
+                />
+              );
+            }
+
+            return (
+              <button
+                key={year}
+                type="button"
+                className="timeline__node"
+                style={{ left }}
+                data-active={role.id === active.id ? '' : undefined}
+                aria-pressed={role.id === active.id}
+                onClick={() => setActiveId(role.id)}
+              >
+                <span className="timeline__node-label">
+                  {year}: {role.role}, {role.company}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </motion.div>
 

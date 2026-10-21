@@ -119,43 +119,44 @@ export const WORK: WorkRole[] = [
   },
 ];
 
-/** A dot on the line that is a year passing rather than a job starting. */
-export interface YearTick {
+/** One circle on the line. Every circle is a year. */
+export interface TimelineYear {
   year: number;
-  /** 0–1 along the line. */
+  /** 0–1 along the line. Years are evenly spaced, not scaled by duration. */
   at: number;
+  /** Set when a job ended in this year, which is what makes it a big one. */
+  roleId: string | null;
 }
 
-const DAY = 86_400_000;
-
-function days(iso: string): number {
-  return new Date(`${iso}T00:00:00Z`).getTime() / DAY;
+function yearOf(iso: string): number {
+  return Number(iso.slice(0, 4));
 }
 
-/** Earliest start, so the line begins where the first job does. */
-const SPAN_START = Math.min(...WORK.map((role) => days(role.start)));
+/** The year a job finished — for the one still running, this year. */
+function endYear(role: WorkRole, now: number): number {
+  return role.end === null ? now : yearOf(role.end);
+}
 
 /**
- * Where a date sits along the line, 0 to 1.
+ * The circles, one per year from the first job to now.
  *
- * The end of the line is today rather than a fixed date, so the current job
- * keeps growing and nothing has to be edited when the year turns.
+ * A year a job ended in carries that job, and the panel draws those bigger
+ * and makes them the only ones you can click. The current job ends at this
+ * year, so its circle is the last on the line and moves along on its own as
+ * the years pass.
  */
-export function position(iso: string | null): number {
-  const end = Date.now() / DAY;
-  const point = iso === null ? end : days(iso);
-  const span = end - SPAN_START;
-  if (span <= 0) return 0;
-  return Math.min(1, Math.max(0, (point - SPAN_START) / span));
-}
+export function timelineYears(): TimelineYear[] {
+  const now = new Date().getFullYear();
+  const first = Math.min(...WORK.map((role) => yearOf(role.start)));
+  const span = Math.max(1, now - first);
 
-/** Every January between the first job and now, for the small dots. */
-export function yearTicks(): YearTick[] {
-  const firstYear = new Date(SPAN_START * DAY).getUTCFullYear() + 1;
-  const thisYear = new Date().getUTCFullYear();
-  const ticks: YearTick[] = [];
-  for (let year = firstYear; year <= thisYear; year += 1) {
-    ticks.push({ year, at: position(`${year}-01-01`) });
+  const years: TimelineYear[] = [];
+  for (let year = first; year <= now; year += 1) {
+    years.push({
+      year,
+      at: (year - first) / span,
+      roleId: WORK.find((role) => endYear(role, now) === year)?.id ?? null,
+    });
   }
-  return ticks;
+  return years;
 }
