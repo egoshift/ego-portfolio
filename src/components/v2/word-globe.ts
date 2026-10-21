@@ -40,6 +40,9 @@ const REST_VELOCITY = 0.002;
 const THROW_SMOOTHING = 0.35;
 /** Ceiling on a throw, radians per second, so it can never spin away. */
 const MAX_THROW = 2.6;
+/** Roughly how far a word overhangs the sphere, as a multiple of the radius.
+ *  Keeps a shifted globe from pushing its labels out of its own column. */
+const OVERHANG = 1.28;
 /** The far side never fades past this, so the globe stays legible through. */
 const MIN_OPACITY = 0.16;
 /** How long a filter change tears the words up for. */
@@ -253,8 +256,30 @@ export class WordGlobe {
     // height, is what decides how big the sphere can be.
     this.radius = Math.min(rect.width * WIDTH_RATIO, rect.height * RADIUS_RATIO);
     this.container.style.setProperty('--globe-size', `${this.radius * 2}px`);
+    this.applyShift(rect.width);
     this.render();
   };
+
+  /**
+   * Nudges the sphere towards one side of its box.
+   *
+   * CSS owns when — `--globe-shift` is -1, 0 or 1, set behind a media query —
+   * and this owns how far, which depends on the radius and so is only known
+   * here. A translate does not change the box's width, so the radius it was
+   * measured from stays valid.
+   */
+  private applyShift(width: number): void {
+    const raw = Number(
+      getComputedStyle(this.container).getPropertyValue('--globe-shift')
+    );
+    const direction = Number.isFinite(raw) ? Math.max(-1, Math.min(1, raw)) : 0;
+    if (!direction) {
+      this.container.style.transform = '';
+      return;
+    }
+    const slack = Math.max(0, width / 2 - this.radius * OVERHANG);
+    this.container.style.transform = `translateX(${(direction * slack).toFixed(1)}px)`;
+  }
 
   private render(): void {
     const { radius } = this;

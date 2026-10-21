@@ -420,6 +420,18 @@ body {
 
     text-align: left;
   }
+
+  /* The two columns lean towards each other rather than sitting at the outer
+     edges: the pills go to the right of theirs, the sphere to the left of its
+     own. How far the sphere can move depends on its radius, so word-globe.ts
+     works that out — this just says which way. */
+  .interests__intro {
+    justify-self: end;
+  }
+
+  .globe__sphere {
+    --globe-shift: -1;
+  }
 }
 
 .interests__intro {
