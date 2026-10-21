@@ -20,6 +20,13 @@ export interface WorkProject {
    * than carrying a picture of something else.
    */
   site?: keyof typeof PREVIEWS;
+  /**
+   * Under NDA, so there is nothing to show and nowhere to send anyone.
+   *
+   * Stated per project rather than inferred from a missing `site`: it is a
+   * claim about what may be shown, not about whether a URL happens to exist.
+   */
+  nda?: boolean;
 }
 
 /** Where each preview came from, and where its shot lives in public/. */
@@ -81,21 +88,25 @@ export const WORK: WorkRole[] = [
       },
       {
         title: 'ESG Platform',
+        nda: true,
         detail:
           'Sole engineer and technical owner of an enterprise sustainability platform shipped for ~40 companies, with configurable inputs, reports and dashboards.',
       },
       {
         title: 'Delivery Platform',
+        nda: true,
         detail:
           'Led the migration of an inter-island delivery system off legacy Python/Flask onto React, React Native and Node. 50+ cities, ~1,000 orders a day.',
       },
       {
         title: 'Asset & Content Management',
+        nda: true,
         detail:
           'San Diego-based product used by Netflix and others. Moved legacy code onto a modern React and TypeScript stack.',
       },
       {
         title: 'Healthcare Digital-ID',
+        nda: true,
         detail:
           'Authentication and identity verification over sensitive personal data, across React web, React Native and backend microservices.',
       },
@@ -140,21 +151,25 @@ export const WORK: WorkRole[] = [
     projects: [
       {
         title: 'Finance Management System',
+        nda: true,
         detail:
           'Budgeting, financial statements and asset inventory, consolidated across every company in the group.',
       },
       {
         title: 'HRIS, Biometrics & Payroll',
+        nda: true,
         detail:
           'A large-scale HRIS with biometric attendance and workflow automation feeding payroll.',
       },
       {
         title: 'Live Tabulation',
+        nda: true,
         detail:
           'Real-time event scoring on WebSockets and NoSQL, run live at 3–5 sponsored competitions a year.',
       },
       {
         title: 'Enrollment System',
+        nda: true,
         detail:
           'Enrollment and balance monitoring with automated SMS reminders, for a school of ~7,000 students a year.',
       },

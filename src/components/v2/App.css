@@ -953,12 +953,18 @@ body {
   color: #aeb9bf;
 }
 
-/* Discrete: each one is a name and what it was, with a shot of the site
-   alongside where there is a public one to show. */
-.work__projects li {
+/* Each project is a card: a shot of the site, or the lock that says why
+   there isn't one, and the name beside it. */
+.work__card {
   display: flex;
   align-items: start;
   gap: clamp(0.5rem, 1vw, 0.9rem);
+
+  padding: clamp(0.5rem, 1.3vh, 0.8rem);
+
+  border: 1px solid rgb(0 230 255 / 0.22);
+  border-radius: 6px;
+  background: rgb(0 230 255 / 0.03);
 }
 
 .work__project-text {
@@ -1002,6 +1008,31 @@ body {
 
   object-fit: cover;
   object-position: top left;
+}
+
+/* Nothing to show, and nowhere to send anyone. */
+.work__project-shot--locked {
+  display: grid;
+  place-content: center;
+  gap: 0.2em;
+  justify-items: center;
+
+  aspect-ratio: 550 / 344;
+
+  border-style: dashed;
+  background: rgb(0 230 255 / 0.04);
+
+  font-size: clamp(0.5rem, min(0.72vw, 1.2vh), 0.72rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #00e6ff;
+
+  pointer-events: none;
+}
+
+.work__project-shot--locked svg {
+  width: clamp(12px, 1.2vw, 17px);
+  height: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

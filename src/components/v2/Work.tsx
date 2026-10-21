@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react';
 import { motion } from 'framer-motion';
+import { LockClosedIcon } from '@heroicons/react/24/solid';
 import { spreadGroup, spreadItem } from './motion';
 import { PREVIEWS, WORK, roleSpan, techFor, timelineYears } from './work.data';
 import { logoUrl } from './logo-store';
@@ -145,8 +146,8 @@ export default function Work() {
                 const preview = project.site ? PREVIEWS[project.site] : undefined;
 
                 return (
-                  <li key={project.title}>
-                    {preview && (
+                  <li key={project.title} className="work__card">
+                    {preview ? (
                       <a
                         className="work__project-shot"
                         href={preview.url}
@@ -156,6 +157,18 @@ export default function Work() {
                       >
                         <img src={logoUrl(preview.file)} alt="" />
                       </a>
+                    ) : (
+                      // The same slot the shot would fill, so the cards stay
+                      // one shape whether or not there is a site to show.
+                      <span
+                        className="work__project-shot work__project-shot--locked"
+                        title={
+                          project.nda ? 'Under NDA' : 'No public site to show'
+                        }
+                      >
+                        <LockClosedIcon aria-hidden="true" />
+                        {project.nda && <span>NDA</span>}
+                      </span>
                     )}
                     <span className="work__project-text">
                       <span className="work__project-title">{project.title}</span>
