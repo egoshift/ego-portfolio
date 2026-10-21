@@ -944,6 +944,31 @@ body {
   margin-bottom: clamp(0.5rem, 1.6vh, 1.1rem);
   /* Keeps an item from being split across the column break. */
   break-inside: avoid;
+
+  /* One after another rather than all at once. --i is the item's index,
+     set inline, and the wrapper is keyed on job and tab so opening either
+     restarts the run. No blur in the keyframe: a filter on the card would
+     make it its own backdrop root and kill the blur behind it. */
+  animation: work-rise 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+@keyframes work-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work__duties li,
+  .work__projects li {
+    animation: none;
+  }
 }
 
 /* Continuous: close leading inside an item, air between them, no markers. */
@@ -964,7 +989,12 @@ body {
 
   border: 1px solid rgb(0 230 255 / 0.22);
   border-radius: 6px;
-  background: rgb(0 230 255 / 0.03);
+  /* Frosted over the ascii field, so the glyphs behind settle down and the
+     text reads. The tint carries it on its own where backdrop-filter is not
+     supported. */
+  background: rgb(8 18 22 / 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .work__project-text {

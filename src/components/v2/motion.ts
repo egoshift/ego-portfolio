@@ -70,6 +70,39 @@ export const spreadItem: Variants = {
 };
 
 /**
+ * The same entrance without the blur.
+ *
+ * framer writes what it animates inline and leaves it there, so an element
+ * using `spreadItem` keeps `filter: blur(0px)` once it has settled. Any
+ * filter — even a zero-length blur — makes that element a backdrop root,
+ * and `backdrop-filter` on anything inside it then has nothing behind it to
+ * sample. The work panel's cards are frosted over the ascii field, so their
+ * container uses this instead.
+ */
+export const spreadItemFlat: Variants = {
+  initial: (direction: SpreadDirection = {}) => ({
+    opacity: 0,
+    x: (direction.x ?? 0) * SPREAD_DISTANCE,
+    y: (direction.y ?? 0) * SPREAD_DISTANCE,
+    scale: 0.92,
+  }),
+  enter: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    scale: 1,
+    transition: EASE_OUT,
+  },
+  exit: (direction: SpreadDirection = {}) => ({
+    opacity: 0,
+    x: (direction.x ?? 0) * SPREAD_DISTANCE * 1.7,
+    y: (direction.y ?? 0) * SPREAD_DISTANCE * 1.7,
+    scale: 0.9,
+    transition: EASE_AWAY,
+  }),
+};
+
+/**
  * The home mark tearing in and out.
  *
  * The split rides a plain number, `--split`, which App.css turns into the two

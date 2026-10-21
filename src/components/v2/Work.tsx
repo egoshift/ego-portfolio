@@ -1,7 +1,7 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, type CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { LockClosedIcon } from '@heroicons/react/24/solid';
-import { spreadGroup, spreadItem } from './motion';
+import { spreadGroup, spreadItem, spreadItemFlat } from './motion';
 import { PREVIEWS, WORK, roleSpan, techFor, timelineYears } from './work.data';
 import { logoUrl } from './logo-store';
 
@@ -113,7 +113,7 @@ export default function Work() {
 
       <motion.div
         className="work__body"
-        variants={spreadItem}
+        variants={spreadItemFlat}
         custom={{ y: -0.3 }}
       >
         <div className="work__tabs" role="tablist">
@@ -132,21 +132,29 @@ export default function Work() {
           ))}
         </div>
 
-        {/* Keyed on both, so switching job or tab replays the fade. */}
-        <div key={`${active.id}-${tab}`} className="work__swap" role="tabpanel">
+        {/* Keyed on both, so switching job or tab restarts the entrance. The
+            items carry it rather than this wrapper, so they arrive one after
+            another instead of the block fading in as one. */}
+        <div key={`${active.id}-${tab}`} role="tabpanel">
           {tab === 'duties' ? (
             <ul className="work__duties">
-              {active.responsibilities.map((duty) => (
-                <li key={duty}>{duty}</li>
+              {active.responsibilities.map((duty, i) => (
+                <li key={duty} style={{ '--i': i } as CSSProperties}>
+                  {duty}
+                </li>
               ))}
             </ul>
           ) : (
             <ul className="work__projects">
-              {active.projects.map((project) => {
+              {active.projects.map((project, i) => {
                 const preview = project.site ? PREVIEWS[project.site] : undefined;
 
                 return (
-                  <li key={project.title} className="work__card">
+                  <li
+                    key={project.title}
+                    className="work__card"
+                    style={{ '--i': i } as CSSProperties}
+                  >
                     {preview ? (
                       <a
                         className="work__project-shot"
