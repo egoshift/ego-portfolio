@@ -1,11 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadContributions } from './contributions';
 import { INTEREST_WORDS } from './interests.data';
+import { WORK_IMAGES } from './work.data';
 import { captureLogo } from './logo-store';
 
 /** Re-render only on a visible step, rather than every frame for two seconds. */
 const STEP = 0.01;
 
+/**
+ * Every logo the page can show, once each.
+ *
+ * The globe and the work panel share most of these files, so the set keeps
+ * one from being fetched twice.
+ */
+const LOGOS = [
+  ...new Set([
+    ...INTEREST_WORDS.flatMap((word) => word.image ?? []),
+    ...WORK_IMAGES,
+  ]),
+];
 
 /**
  * How far the page is from being ready, 0 to 1.
@@ -24,10 +37,9 @@ export function useLoadProgress(): number {
     const tasks: Promise<unknown>[] = [
       document.fonts ? document.fonts.ready : Promise.resolve(),
       loadContributions(),
-      // Captured as blobs, so the globe's masks have nothing left to fetch.
-      ...INTEREST_WORDS.filter((word) => word.image).map((word) =>
-        captureLogo(word.image as string)
-      ),
+      // Captured as blobs, so the globe's masks and the work panel's logos
+      // have nothing left to fetch when you open them.
+      ...LOGOS.map((path) => captureLogo(path)),
     ];
     const total = tasks.length;
     for (const task of tasks) {

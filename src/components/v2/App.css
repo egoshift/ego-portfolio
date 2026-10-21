@@ -951,3 +951,38 @@ body {
   line-height: 1.5;
   color: #8d9aa0;
 }
+
+/* Second heading in the left column, so it needs the space above that the
+   first one gets from the column itself. */
+.work__label--tech {
+  margin-top: clamp(1.1rem, 3.2vh, 2.2rem);
+}
+
+/* A wrapped run of logos, in their own colours, each on the same light tile.
+   The tile is doing two jobs: js, ts and bootstrap have no transparency and
+   would otherwise read as solid blocks beside the cut-out ones, and Next.js
+   and NX are black, so on anything dark they vanished entirely. */
+.work__tech {
+  --logo: clamp(22px, min(2.3vw, 3.6vh), 34px);
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.3rem, 0.9vh, 0.5rem);
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.work__tech img {
+  display: block;
+
+  width: var(--logo);
+  height: var(--logo);
+  padding: calc(var(--logo) * 0.16);
+
+  border-radius: calc(var(--logo) * 0.24);
+  background: rgb(255 255 255 / 0.88);
+  object-fit: contain;
+}

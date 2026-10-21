@@ -22,6 +22,8 @@ export interface WorkRole {
   end: string | null;
   /** How the period reads under the title. */
   period: string;
+  /** What the job was built with, as keys into TECH below. */
+  tech: string[];
   responsibilities: string[];
   projects: WorkProject[];
 }
@@ -30,11 +32,24 @@ export interface WorkRole {
 export const WORK: WorkRole[] = [
   {
     id: 'symph',
-    role: 'Senior Software Engineer',
+    role: 'Full-stack Developer',
     company: 'Symph',
     start: '2020-10-01',
     end: null,
     period: 'October 2020 — Present',
+    tech: [
+      'ts',
+      'react',
+      'nextjs',
+      'nestjs',
+      'nx',
+      'postgresql',
+      'tailwindcss',
+      'mui',
+      'js',
+      'html',
+      'css',
+    ],
     responsibilities: [
       'Architect and ship full-stack products end to end, from schema design and migrations through to deployment.',
       'Lead engineering and product direction on AI platforms — generation pipelines and the guardrails around them.',
@@ -88,6 +103,17 @@ export const WORK: WorkRole[] = [
     start: '2018-06-01',
     end: '2020-09-30',
     period: 'June 2018 — September 2020',
+    tech: [
+      'php',
+      'laravel',
+      'code-igniter',
+      'mysql',
+      'jquery',
+      'bootstrap',
+      'js',
+      'html',
+      'css',
+    ],
     responsibilities: [
       'Built shared-service platforms in PHP/Laravel and MySQL serving 4 companies and ~2,500 employees.',
       'Reviewed manual processes across departments to find what could be automated, then automated it.',
@@ -118,6 +144,53 @@ export const WORK: WorkRole[] = [
     ],
   },
 ];
+
+export interface Tech {
+  name: string;
+  image: string;
+}
+
+/**
+ * The logos, the same files the globe uses.
+ *
+ * Shown in full colour rather than tinted cyan like the globe's: that tint is
+ * a CSS mask, and js, ts and bootstrap are fully opaque PNGs, so those three
+ * would mask to solid blocks.
+ */
+const TECH: Record<string, Tech> = {
+  html: { name: 'HTML', image: 'tech/html.png' },
+  css: { name: 'CSS', image: 'tech/css.png' },
+  js: { name: 'JavaScript', image: 'tech/js.png' },
+  ts: { name: 'TypeScript', image: 'tech/ts.png' },
+  react: { name: 'React', image: 'tech/react.png' },
+  nextjs: { name: 'Next.js', image: 'tech/nextjs.png' },
+  nestjs: { name: 'NestJS', image: 'tech/nestjs.png' },
+  nx: { name: 'NX', image: 'tech/nx.png' },
+  postgresql: { name: 'PostgreSQL', image: 'tech/postgresql.png' },
+  tailwindcss: { name: 'TailwindCSS', image: 'tech/tailwindcss.png' },
+  mui: { name: 'MaterialUI', image: 'tech/mui.png' },
+  php: { name: 'PHP', image: 'tech/php.png' },
+  laravel: { name: 'Laravel', image: 'tech/laravel.png' },
+  'code-igniter': { name: 'CodeIgniter', image: 'tech/code-igniter.png' },
+  jquery: { name: 'jQuery', image: 'tech/jquery.png' },
+  bootstrap: { name: 'Bootstrap', image: 'tech/bootstrap.png' },
+  mysql: { name: 'MySQL', image: 'tech/mysql.png' },
+};
+
+/** The logos for one job, in the order they are listed. */
+export function techFor(role: WorkRole): Tech[] {
+  return role.tech.flatMap((key) => TECH[key] ?? []);
+}
+
+/**
+ * Every logo this panel can show.
+ *
+ * Loading pulls these in with the rest, so opening the panel costs no
+ * requests — the same reason the globe's logos are captured up front.
+ */
+export const WORK_IMAGES: string[] = [
+  ...new Set(WORK.flatMap((role) => role.tech)),
+].flatMap((key) => TECH[key]?.image ?? []);
 
 /** One circle on the line. Every circle is a year. */
 export interface TimelineYear {

@@ -1,7 +1,8 @@
 import { Fragment, useState } from 'react';
 import { motion } from 'framer-motion';
 import { spreadGroup, spreadItem } from './motion';
-import { WORK, roleSpan, timelineYears } from './work.data';
+import { WORK, roleSpan, techFor, timelineYears } from './work.data';
+import { logoUrl } from './logo-store';
 
 const YEARS = timelineYears();
 
@@ -98,6 +99,17 @@ export default function Work() {
             <ul className="work__duties">
               {active.responsibilities.map((duty) => (
                 <li key={duty}>{duty}</li>
+              ))}
+            </ul>
+
+            <h3 className="work__label work__label--tech">Tech stack</h3>
+            <ul className="work__tech">
+              {techFor(active).map((tech) => (
+                <li key={tech.name}>
+                  {/* logoUrl hands back the copy loading already pulled in,
+                      so opening the panel fetches nothing. */}
+                  <img src={logoUrl(tech.image)} alt={tech.name} title={tech.name} />
+                </li>
               ))}
             </ul>
           </section>
