@@ -28,17 +28,24 @@ export default function AppV2() {
   return (
     <main className="viewport">
       <AsciiField />
+      {/* The mark, and the way home. Only on the panels — on the hero it
+          would be pointing at the page you are already on. */}
+      {view !== 'hero' && (
+        <button
+          type="button"
+          className="home glitch"
+          aria-label="Home"
+          onClick={() => setView('hero')}
+        >
+          E
+        </button>
+      )}
       {/* wait, so the outgoing group finishes scattering before the next spreads in */}
       <AnimatePresence mode="wait">
         {view === 'hero' && <Hero key="hero" onTrigger={handleTrigger} />}
         {view === 'about' && <About key="about" />}
         {view === 'interests' && <Interests key="interests" />}
       </AnimatePresence>
-      {view !== 'hero' && (
-        <button type="button" className="back" onClick={() => setView('hero')}>
-          back
-        </button>
-      )}
     </main>
   )
 }
