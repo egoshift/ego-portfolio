@@ -24,8 +24,9 @@ export default function Work() {
         custom={{ y: -1 }}
       >
         {/* The line runs from the first job to today, so the current one keeps
-            growing on its own. Years are the small dots; jobs are the ones you
-            can click. */}
+            growing on its own. The small dots are years going by and are not
+            interactive; a big one is where a job ended, which for the current
+            one is the end of the line. */}
         <div className="timeline">
           <span className="timeline__line" aria-hidden="true" />
           {TICKS.map((tick) => (
@@ -41,7 +42,7 @@ export default function Work() {
               key={role.id}
               type="button"
               className="timeline__node"
-              style={{ left: `${position(role.start) * 100}%` }}
+              style={{ left: `${position(role.end) * 100}%` }}
               data-active={role.id === active.id ? '' : undefined}
               aria-pressed={role.id === active.id}
               onClick={() => setActiveId(role.id)}
@@ -51,8 +52,6 @@ export default function Work() {
               </span>
             </button>
           ))}
-          {/* Today, capping the line. */}
-          <span className="timeline__now" aria-hidden="true" />
         </div>
       </motion.div>
 
@@ -70,8 +69,8 @@ export default function Work() {
           </header>
 
           <div className="work__columns">
-            <section className="work__column">
-              <h3 className="work__label">Roles &amp; Responsibilities</h3>
+            <section className="work__column work__column--duties">
+              <h3 className="work__label">Roles and responsibilities</h3>
               <ul className="work__duties">
                 {active.responsibilities.map((duty) => (
                   <li key={duty}>{duty}</li>
@@ -79,8 +78,8 @@ export default function Work() {
               </ul>
             </section>
 
-            <section className="work__column">
-              <h3 className="work__label">Notable Projects</h3>
+            <section className="work__column work__column--projects">
+              <h3 className="work__label">Notable projects</h3>
               <ul className="work__projects">
                 {active.projects.map((project) => (
                   <li key={project.title}>
